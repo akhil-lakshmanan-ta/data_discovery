@@ -238,8 +238,8 @@ The self-check (`check`) tells you whether your outputs are complete and consist
 ## Submission notes
 - **Environment & model:** Python 3.11.3 with gateway model `claude-haiku-5-5`; `scripts/web_search.py` implemented for Step 2b grounded web discovery.
 - **Gaps implemented (`G1`–`G7`):**
-  - `G1` (`extract_licence`) and `G3` (`jsonstat_summary`) implemented in `discovery_agent/tools.py` (ignoring `"Unknown"` JSON-LD placeholders when body licence links exist, and counting only non-null JSON-stat cells).
-  - `G4` temporal/grain rules and `G5` 8-rule verdict calibration added to `discovery_agent/prompts/risk_assessor.md`.
+  - `G1` (`extract_licence`) implemented in `discovery_agent/tools/licence.py` (ignoring `"Unknown"` JSON-LD placeholders when body licence links exist) and `G3` (`jsonstat_summary`) implemented in `discovery_agent/tools/formats.py` (counting only non-null JSON-stat cells).
+  - `G4` deterministic rules (`rule_temporal_coverage`, `rule_grain`, `rule_metadata_contradiction`) implemented in `discovery_agent/risk_rules.py`, and `G5` 8-rule verdict calibration added to `discovery_agent/prompts/risk_assessor.md`.
   - `G6` exact-host allowlist updated in `config/allowlist.json` (`ec.europa.eu`, `www.dati.lombardia.it`; `catalog.data.gov` intentionally excluded).
   - `G7` fixed in `discovery_agent/prompts/profiler.md` line 7 so `public_api` probes always cover every target window start/end and touched calendar year, moving `UC2` `N4` (`api.nager_public_holidays`) from `partially_met` to `met_with_conditions`.
 - **Use-case verdicts & sign-offs:**
