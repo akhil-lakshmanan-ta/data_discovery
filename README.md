@@ -247,19 +247,22 @@ The self-check (`check`) tells you whether your outputs are complete and consist
   - `UC2`: `not_feasible` (`stop` in `outputs/UC2/signoff.json`) due to unmet must-need `N2` (no mapping table for retired pre-2024 `"L"` product codes) and overriding production use of `api.nager_public_holidays` while `LIC-UNKNOWN` remains unresolved.
 - **Skill & verification:** Extended `skills/data-discovery-agent/SKILL.md` (and `.claude/skills/data-discovery-agent/SKILL.md`) with Steps 3–5 and verified Steps 0–2b in a fresh Claude Code session on `UC2`. `python -m pytest tests/ -q` passes (`52 passed`), and both `python -m discovery_agent check UC1` and `check UC2` pass with `"problems": []`.
 
-**Reuse check.** Open a fresh Claude Code session that has only your skill and this README. Run Steps 0–2b for UC2, and profile the links you accept in Step 2b (UC2 has no prescribed links). If none survives your check, record "none accepted" and stop. Answer:
-- Which steps could not be followed as written, and what was missing?
-- Which inputs would a data scientist replace for a new project (use-case contract, catalog export, wiki, register entries, permitted hosts, dataset links)?
-- Which values did you find hard-coded for UC1 or UC2, and what did you change?
+**Reuse check.** Ran a fresh Claude Code session on UC2 (Steps 0–2b) using only `.claude/skills/data-discovery-agent/SKILL.md` with `--out` pointing to a scratch directory (UC2 has no prescribed links; none accepted in Step 2b, stopped before Step 3):
+- *Steps that could not be followed as written / what was missing:* Step 0 stated `tests/test_learner_gaps.py` would fail (20 of 52), whereas all 52 pass once G1–G6 are implemented; Steps 0–1 also did not mention `--out <dir>` for running a non-destructive reuse check without overwriting existing outputs. Both were added to `SKILL.md` (and synced to `.claude/`).
+- *Inputs a data scientist replaces for a new project:* `use_cases/<ID>_<slug>.json` and `.md`, `internal/<ID>_<client>/catalog_export.json` and `wiki/*.md`, use-case entries in `config/external_sources_register.json`, exact hosts in `config/allowlist.json`, and `outputs/<ID>/links.json` + `gate_decisions.json` (if external links are used).
+- *Hard-coded values found and changed:* `config/external_sources_register.json` had Lisbon coordinates (`38.72, -9.14`) for `api.open_meteo_archive`; updated to Milan (`45.46, 9.19`) for northern Italy and logged in `outputs/artifacts/decisions.md`.
 
-**Delivery reflection.** For one bounded activity (for example, reviewing one source shortlist):
-- The steps you did yourself, and what the assistant did.
-- What you still had to check yourself.
-- Your review time (measured by you) and the model usage from `outputs/<ID>/run_history.jsonl` (one line per stage run). If you did not measure your review time, say so and make no time-saving claim.
+**Delivery reflection (bounded activity: UC2 end-to-end discovery & G7 fix).**
+- *What I did vs. what the assistant did:* The discovery agent planned searches, scouted internal catalog/wiki/register sources, profiled all 5 sources, ran deterministic rules, assessed risks, and drafted `feasibility_memo.md`. I verified the trace and transcripts, diagnosed the G7 Nager single-year probe bug, directed the `profiler.md` prompt fix, wrote `outputs/artifacts/review_UC2.md` and `outputs/UC2/signoff.json` (`verdict: "stop"`), and overruled `api.nager_public_holidays` for production use.
+- *What I still had to check myself:* Verified `temporal.grain` changes (`daily` -> `event`), checked non-rule judgement flag drift across re-assessments (`COV-GEO-MISMATCH` severity mismatch vs. `config/red_flags.json`), confirmed `N2` had no mapping table in `wiki/product_codes_2024.md`, and checked `check_UC2.json` returned `"problems": []`.
+- *Review time and model usage:* I did not time my manual review with a stopwatch, so I make no time-saving claim. Model usage from `outputs/UC2/run_history.jsonl` (`claude-haiku-5-5`):
+  - Full run (`plan` 28.7s, `scout` 35.2s, `profile` 57.6s, `assess` 53.6s, `memo` 33.2s): 30 LLM calls, 312,760 input / 60,626 output tokens, 36 tool calls (2 errors), 5 HTTP requests (1 refused).
+  - G7 targeted re-profile (`profile` 42.8s): 4 LLM calls, 47,313 input / 8,165 output tokens, 6 tool calls (0 errors), 3 HTTP requests (0 refused).
+  - G7 re-assess + memo (`assess` 41.2s, `memo` 31.0s): 2 LLM calls, 30,933 input / 14,163 output tokens, 0 tool calls.
 
-**Ownership.** In a few sentences each:
-- One source you selected or rejected, and why.
-- One rule or agent correction you made, and what it changed.
-- One change a new use case would need in the skill or the inputs.
+**Ownership.**
+- *One source selected or rejected and why:* Rejected `https://www.dati.lombardia.it/d/ib47-atvt` in UC1 Step 2b because it is a static station/sensor metadata table with no pollutant concentration readings for `N1` (and was not a direct search citation), while accepting `nicp-bhqi` for actual air-sensor readings.
+- *One rule or agent correction and what it changed:* Updated `discovery_agent/prompts/profiler.md` line 7 (G7) so `public_api` profilers always probe the start/end of every target window and every touched calendar year instead of only `"if coverage is in doubt"`. Re-running UC2 probed all four years (`2023`–`2026`, HTTP 200) and moved `N4` from `partially_met` to `met_with_conditions`.
+- *One change a new use case would need:* Supply its own use-case contract (`use_cases/<ID>_*.json` and `.md`), internal catalog/wiki export, and exact-host allowlist entries for any accepted external datasets (plus appropriate geographic coordinates in `config/external_sources_register.json`).
 
 *The companies, people and internal documents are fictional. The public datasets and APIs are real; their terms belong to their providers and must be read at the source.*
