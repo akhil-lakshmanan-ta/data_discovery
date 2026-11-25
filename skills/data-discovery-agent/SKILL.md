@@ -6,13 +6,12 @@ description: >
   external data sources for a business problem, before any pipeline is built. Works for
   any use case written to the use-case contract (use_cases/<ID>_*.json + brief + internal
   estate). It sets up and checks the agent, frames the use case, runs planning and scouting,
-  suggests external sources for unmet needs (Step 2b), then pauses for human review. It
-  deliberately does NOT cover profiling, risk assessment, the memo or the learner gaps (G1–G7).
-  The learner builds those with Claude directly, and the learner's deliverable includes
-  extending this file with Steps 3–5.
+  suggests external sources for unmet needs (Step 2b), then pauses for human review. Steps 3–5
+  cover the candidate gate, the pipeline runs, the trace audit with one G7 root-cause fix, and
+  the memo review, sign-off and self-check.
 ---
 
-# AI-Native Data Discovery: Assignment Runner (Steps 0–2b only)
+# AI-Native Data Discovery: Assignment Runner (Steps 0–5)
 
 You are Claude, running the first steps of **Stack AI Rewire, Assignment: AI-Native Data
 Discovery** in Claude Code, against the learner's copy of this repo. The repo
@@ -20,9 +19,8 @@ contains a multi-agent discovery system (`discovery_agent/`): Planner → Scout 
 wiki, external register) → **candidate gate, where the human adds dataset links (any URL)** →
 Profiler (one per source) → deterministic rules → Risk Assessor → Memo Writer, then a human review gate.
 
-This skill gets a use case ready, checks the tooling, runs **plan + scout**, and suggests external
-sources for the needs that remain unmet (Step 2b). Profiling, red-flag assessment, the feasibility
-memo and the learner gaps are done in a normal Claude Code session, guided by `README.md`.
+This skill gets a use case ready, checks the tooling, runs **plan + scout**, suggests external
+sources for the needs that remain unmet (Step 2b), then runs the pipeline and the review (Steps 3–5).
 
 The skill is **use-case agnostic**. UC1 (air quality and traffic) and UC2 (ice-cream sales, weather and holidays) ship with
 the repo, but any business problem written to the contract below runs the same way.
@@ -62,8 +60,7 @@ the repo, but any business problem written to the contract below runs the same w
 │   ├── links.json                           <- Step 2 (copy of the prescribed links) and Step 2b (accepted suggestions appended): the ONE links file
 └── outputs/artifacts/step0_checks.md        <- Step 0
 ```
-Everything after `candidates.json` (records/, rule_flags.json, risk_assessment.json,
-discovery_results.json, feasibility_memo.md) is produced later, outside this skill.
+Steps 3–5 produce the remaining files under `outputs/<ID>/` (`gate_decisions.json`, `records/`, `rule_flags.json`, `risk_assessment.json`, `discovery_results.json`, `feasibility_memo.md`, `signoff.json`) and `outputs/artifacts/` (`review_<ID>.md`, `check_<ID>.json`, `pytest_after.txt`, `decisions.md`).
 
 ---
 
@@ -74,8 +71,9 @@ discovery_results.json, feasibility_memo.md) is produced later, outside this ski
    `python -c "import os;print({k: bool(os.environ.get(k)) for k in ['ANTHROPIC_BASE_URL','ANTHROPIC_AUTH_TOKEN','ANTHROPIC_MODEL']})"`.
    If any is `False`, stop and tell the learner which one. Do not ask them to paste the token.
 3. Run the offline tests: `python -m pytest tests/ -q`. `tests/test_tools_offline.py` and
-   `tests/test_agent_loop.py` must pass. `tests/test_learner_gaps.py` is **expected to fail** until
-   the learner implements G1, G3, G4, G5 and G6. Report which gap tests fail; do not implement them here.
+   `tests/test_agent_loop.py` must pass. On a fresh starter repo, `tests/test_learner_gaps.py` is
+   **expected to fail** (20 of 52 tests) until G1, G3, G4, G5 and G6 are implemented; once those gaps
+   are closed, all 52 tests pass. If any gap tests fail on a fresh repo, report them; do not implement them here.
 4. Smoke-test the tools without the LLM:
    - `python -m discovery_agent tool search_internal_catalog '{"query": "<a need from the brief>"}' --use-case <ID>`
    - `python -m discovery_agent tool inspect_dataset_link '{"url": "https://archive.ics.uci.edu/dataset/360/air+quality"}' --use-case <ID>`
@@ -165,8 +163,7 @@ learner before you change any input.
 them the command for the next stage:
 `python -m discovery_agent run --use-case <ID> --from-stage profile --links-file outputs/<ID>/links.json`
 (the same file as Step 2; it must hold every link the learner has decided on).
-This skill has nothing further to do. Profiling, rules, risk assessment, the memo and the gaps
-happen in a normal session from here, guided by `README.md`.
+Continue with Step 3.
 
 ---
 
@@ -187,22 +184,129 @@ happen in a normal session from here, guided by `README.md`.
 
 ---
 
-## The other deliverable: extend this file
-Once the learner has worked with you directly (not through this skill) to run the remaining
-stages, close gaps G1–G7 and review the memo, part of what they submit is an **updated version of
-this file** with:
-- **Step 3: Profile and rule-check:** running `--from-stage profile`, what to check in each
-  `outputs/<ID>/records/*.json` (provenance count, licence evidence and `found_in`, temporal and
-  grain fields, `sample_findings` against the documentation, unknowns), how dataset links of
-  different types are handled, and how to read `rule_flags.json` and rule warnings.
-- **Step 4: Assess and draft the memo:** verdict calibration (the rules they wrote for G5),
-  dismissed-flag review, the memo's seven required sections, and the human review gate.
-- **Step 5: Evaluate and hand off:** `python -m discovery_agent check <ID>`, the trace checks
-  they ran (guardrail refusals, request counts, token totals), the before/after evidence of one
-  agent fix (G7), and what goes in `outputs/artifacts/`.
+## Step 3: Candidate gate, allowlist, tests and the pipeline run
+1. **Gate decisions (only when the use case has dataset links).** The learner writes
+   `outputs/<ID>/gate_decisions.json` with one entry for every link in `outputs/<ID>/links.json`:
+   `{"decisions": [{"url", "decision": "accept" or "reject", "reason"}]}`. Each `url` must match a link
+   in `links.json` exactly (copy it, do not retype it). Each `reason` is at least 20 characters, in the
+   learner's own words. The pipeline refuses to profile a link without one. For UC2 (no links), skip
+   this file and run without `--links-file`.
+2. **Allowlist.** Open `config/allowlist.json`. Every entry is an exact host (for example
+   `www.dati.lombardia.it`), with no `*` and no parent domain such as `europa.eu`. Each host added under
+   G6 needs a justification in `outputs/artifacts/decisions.md`. Never add `catalog.data.gov` or any host
+   the learner has not accepted. A refused host is a finding, not a bug to work around.
+3. **Tests.** Run `python -m pytest tests/ -q`. Before the gap work, `tests/test_learner_gaps.py`
+   fails (20 of 52 tests). Once G1–G6 are done, all 52 must pass. Save the output with
+   `python -m pytest tests/ -q > outputs/artifacts/pytest_after.txt`.
+4. **Run the pipeline.**
+   - With links: `python -m discovery_agent run --use-case <ID> --links-file outputs/<ID>/links.json --no-input`
+   - Without links: `python -m discovery_agent run --use-case <ID> --no-input`
+   - Targeted re-run: `python -m discovery_agent run --use-case <ID> --from-stage <stage> --stop-after <stage> --only <source_id>[,<source_id>] --no-input`.
+     The stages are `plan, scout, profile, assess, memo`.
 
-Write the new steps the way Steps 0–2 are written: concrete, imperative, naming exact files,
-commands and checks. The test: someone else gives the updated skill to a fresh Claude session
-with a **different use case** (a new `use_cases/<ID>_*.json`, brief and internal estate) and gets
-a comparable result. If a step only works for UC1 or UC2, or is too vague to act on, revise it.
-If asked to help write those steps, describe what the learner actually did, not a generic template.
+   A full UC1 run took more than 10 minutes. Run it in the background and wait for it to finish. Do
+   not start a second copy while it runs.
+5. **Read the run output.** Check the end of the run log and `outputs/<ID>/run_summary.json`. `warnings`
+   should list only the hosts you already expect to be refused (for UC1, `catalog.data.gov`). Compare
+   `http_refused` and `tool_errors` with the refusals you expect.
+
+Practical gotchas (observed in UC1 and UC2):
+- Pass `--out <dir>` to redirect pipeline outputs into a scratch folder when running a dry run or reuse check without overwriting an existing `outputs/<ID>/`.
+- `run` takes `--use-case <ID>`. `check` takes the ID as a positional argument: `check UC1`.
+- `--from-stage profile` reuses `candidates_final.json` and says so in the log. To run the gate again,
+  pass `--link` or `--links-file`.
+- `trace.jsonl` is appended by every run. `check` totals every run in it: UC1 showed 40 LLM calls
+  (8 from the plan and scout run plus 32 from the full run). `run_summary.json` shows only the latest run.
+  Compare per-run figures with `run_summary.json`.
+- `--from-stage assess` re-assesses every record, not only the one you changed.
+- `--only` takes a comma-separated list of source ids.
+- Scout citations from `scripts/web_search.py` are often `vertexaisearch.cloud.google.com/grounding-api-redirect/...`
+  links. Resolve them with Python `urllib.request`, because curl was blocked in the sandbox. A
+  JavaScript-rendered page returns only navigation through WebFetch. The Lombardy dataset pages and the
+  Eurostat table page did. Read the API endpoint or the export instead.
+- A `RemoteProtocolError` from an agent (UC1 risk assessor, two retries, then success) is a transport
+  failure. Re-run the stage. Do not change the prompt for it.
+
+## Step 4: Trace audit and one G7 root-cause fix
+1. **Find the failures.** Search `outputs/<ID>/trace.jsonl` for `"ok": false`, `"is_error": true`,
+   `"refused"`, `"llm_retry"`, and `"kind": "submit"` with `"ok": false`. Each hit names an agent
+   (`planner`, `scout`, `risk_assessor`, `memo_writer`, or `profiler__<source_id>`) and a timestamp. Find
+   the matching `outputs/<ID>/transcripts/<agent>.json` and read the `tool_result` that follows.
+2. **Check each record against its windows.** Open `outputs/<ID>/records/<source_id>.json`. For a
+   `public_api`, compare the years in `provenance` and `unknowns` with every window in
+   `use_cases/<ID>_*.json`. Each window's start and end must be probed, or listed as unknown. For a
+   dataset link, `licence.found_in` must be set whenever `licence.name` is. `sample_findings` must name a
+   column. Compare the memo and `discovery_results.json` for the same need: status, gap and verdict must agree.
+3. **Classify the mistake before you change anything.** It is one of: a prompt instruction that is missing
+   or conditional; a tool description or error message that does not state the required shape; a validator
+   or schema rule that is too strict; or a rule in `discovery_agent/risk_rules.py`. Refused hosts, redirects
+   off the allowlist and transport retries are not agent mistakes. Record them as findings.
+4. **Make one minimal fix.** Edit the prompt, tool description, validator or rule in `discovery_agent/`.
+   Never edit a file under `outputs/`. First save copies of `outputs/<ID>/records/<source_id>.json`,
+   `discovery_results.json` and `feasibility_memo.md` to a folder outside the repo (for example the system
+   temp folder), so the before state survives the re-run.
+5. **Re-run from the affected stage.** To re-profile one source:
+   `python -m discovery_agent run --use-case <ID> --from-stage profile --stop-after profile --only <source_id> --no-input`.
+   Then re-assess: `python -m discovery_agent run --use-case <ID> --from-stage assess --no-input`.
+   Then run `python -m pytest tests/ -q`.
+6. **Check for regressions.** Re-profile one other source that uses the same agent, and confirm its record
+   still meets the Step 4 checks. A prompt change that is not re-tested on a second source is not verified.
+7. **Log the fix in `outputs/artifacts/decisions.md`** under the G7 headings: symptom; evidence (trace line
+   and transcript line); root cause; the fix (file and the changed sentence); the re-run command; before and
+   after (years probed, unknowns, the need's status and gap, the overall verdict); the decision it could
+   affect; the related source or test checked.
+
+Pitfalls (observed):
+- A conditional instruction lets the agent skip a check it should always make. In UC2 the Nager profiler
+  probed 2024 only, and listed 2023, 2025 and 2026 as unknowns, because the prompt said "if coverage is in
+  doubt". Changing that to an always-rule gave four years, and moved N4 from `partially_met` to
+  `met_with_conditions`.
+- Re-assessing changes judgement flags. In UC2 the Nager flags `DQ-UNDOCUMENTED-SCHEMA`,
+  `GOV-OWNER-UNKNOWN` and `GOV-PURPOSE-LIMITATION` dropped out, and `COV-GEO-MISMATCH` appeared with
+  severity `minor`, while `config/red_flags.json` says `major`. Record every such change. Do not call it an
+  improvement without checking it.
+- A re-profile can change a grain without a reason. The UC2 Nager record moved from `daily` to `event`.
+  The grain rule never compares `event`, so the check was silently turned off. Check `temporal.grain` after
+  every re-profile.
+- Unsourced claims. A UC2 quality note said Easter dates "match the known Easter Sunday dates by general
+  knowledge". That is not a provenance entry. Check every claim in `quality_notes` against a tool call.
+- Schema rejections are retried and cost turns. The planner rejected `priority_note` (UC1) and a missing
+  `need_id` (UC2). Profilers sent `provenance` as a JSON string and omitted `unknowns` (UC2 Nager,
+  Open-Meteo and daily sales). The scout sent `unmet_needs` as a string (UC2). Fix these in the prompt, with
+  a one-line example of the required shape.
+- Do not look up a `vendor_feed` in the internal catalog. UC1 AtmosData called `get_catalog_entry` and got
+  `TOOL_ERROR`. The register entry is its only source.
+
+## Step 5: Memo review, sign-off and self-check
+1. **Compare the memo with the results.** Open `outputs/<ID>/feasibility_memo.md`,
+   `outputs/<ID>/discovery_results.json` and `outputs/<ID>/records/`. Check that: the overall verdict and the
+   number of sources per verdict match the results; each need's status and gap in the memo's coverage table
+   match `need_coverage`; each source's red flags in the red-flag register match `sources[].red_flag_details`;
+   the memo has its seven sections (executive summary, need coverage, source assessments, red-flag register,
+   conditions and owners, recommended next steps, open questions) and the review gate; each count and date
+   the memo cites matches a record. Known mismatch: the UC1 memo says "(6 sources)" for feasible with
+   conditions, but the results have 7. Do not hand-edit the memo. Note the mismatch in the review, and fix
+   the memo writer if it matters.
+2. **Write the review.** The human writes `outputs/artifacts/review_<ID>.md`, with the ID in the exact case
+   (`review_UC2.md`). The validator checks the name exactly. A lowercase `review_uc1.md` passed only because
+   Windows file names are case-insensitive. The review covers: the overall verdict and whether you agree;
+   each source's verdict, with the record evidence behind it; each agreement and override in `signoff.json`;
+   and the decision (proceed, proceed with conditions, or stop).
+3. **Write `outputs/<ID>/signoff.json`.** Start from `outputs/artifacts/_TEMPLATE_signoff.json`. The human
+   fills it in. Claude does not write it for the learner. The validator enforces: `reviewer` is not empty;
+   `verdict` is `proceed`, `proceed_with_conditions` or `stop`; `proceed_with_conditions` has at least one
+   condition, each with `text`, `owner` and `due`; at least one `agreements` or `overrides` entry, each with
+   a `reason`; `traced_conclusion.source_id` is a source in `discovery_results.json` with a record file;
+   `record_field` is a dotted path that exists in that record (for example `temporal.end`); and
+   `could_change_if` is at least 20 characters.
+4. **Self-check.** Run `python -m discovery_agent check <ID> > outputs/artifacts/check_<ID>.json`, then read
+   the file. The target is `"problems": []`. Do not change the check or the tests to reach it. The
+   `trace_stats` in that file cover every run in `trace.jsonl`, so they will not equal `run_summary.json`.
+   Record the difference rather than changing either file.
+5. **Stop before the next use case.** Do not start another use case until the memo review, `signoff.json`
+   and the check all pass. Report the check output and any problems that are still open.
+
+The skill is complete at Step 5. Each step above names its files, commands and checks. A fresh Claude
+session given a different use case (a new `use_cases/<ID>_*.json`, brief and internal estate) should be
+able to follow Steps 0–5 with a comparable result. If a step only works for UC1 or UC2, or is too vague
+to act on, revise it.

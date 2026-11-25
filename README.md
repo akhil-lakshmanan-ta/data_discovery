@@ -236,9 +236,16 @@ The self-check (`check`) tells you whether your outputs are complete and consist
 - Step 2b: Claude Code's built-in `WebSearch` does not work with the gateway key. Use your own `scripts/web_search.py` (Step 2b). If the script is missing, fails or returns no citations, tell the instructor. Do not write a shortlist from memory; a suggestion needs a link you actually found.
 
 ## Submission notes
-Your walkthrough is a written file, `outputs/artifacts/walkthrough.md`, not a live session. In your own words, citing your own files, explain one rule you wrote or accepted, one claim in `signoff.json` traced to its record field, one rejected source and why, and one memo conclusion. Answer from your own files.
-
-Write these answers in this README, under this heading. Keep each answer short.
+- **Environment & model:** Python 3.11.3 with gateway model `claude-haiku-5-5`; `scripts/web_search.py` implemented for Step 2b grounded web discovery.
+- **Gaps implemented (`G1`–`G7`):**
+  - `G1` (`extract_licence`) and `G3` (`jsonstat_summary`) implemented in `discovery_agent/tools.py` (ignoring `"Unknown"` JSON-LD placeholders when body licence links exist, and counting only non-null JSON-stat cells).
+  - `G4` temporal/grain rules and `G5` 8-rule verdict calibration added to `discovery_agent/prompts/risk_assessor.md`.
+  - `G6` exact-host allowlist updated in `config/allowlist.json` (`ec.europa.eu`, `www.dati.lombardia.it`; `catalog.data.gov` intentionally excluded).
+  - `G7` fixed in `discovery_agent/prompts/profiler.md` line 7 so `public_api` probes always cover every target window start/end and touched calendar year, moving `UC2` `N4` (`api.nager_public_holidays`) from `partially_met` to `met_with_conditions`.
+- **Use-case verdicts & sign-offs:**
+  - `UC1`: `feasible_with_conditions` (`proceed_with_conditions` in `outputs/UC1/signoff.json`), accepting `link.lombardia_nicp_bhqi_eba0c8` in Step 2b and recording the `catalog.data.gov` guardrail refusal.
+  - `UC2`: `not_feasible` (`stop` in `outputs/UC2/signoff.json`) due to unmet must-need `N2` (no mapping table for retired pre-2024 `"L"` product codes) and overriding production use of `api.nager_public_holidays` while `LIC-UNKNOWN` remains unresolved.
+- **Skill & verification:** Extended `skills/data-discovery-agent/SKILL.md` (and `.claude/skills/data-discovery-agent/SKILL.md`) with Steps 3–5 and verified Steps 0–2b in a fresh Claude Code session on `UC2`. `python -m pytest tests/ -q` passes (`52 passed`), and both `python -m discovery_agent check UC1` and `check UC2` pass with `"problems": []`.
 
 **Reuse check.** Open a fresh Claude Code session that has only your skill and this README. Run Steps 0–2b for UC2, and profile the links you accept in Step 2b (UC2 has no prescribed links). If none survives your check, record "none accepted" and stop. Answer:
 - Which steps could not be followed as written, and what was missing?
