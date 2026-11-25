@@ -1,0 +1,151 @@
+{
+  "source_id": "link.lombardia_nicp_bhqi_eba0c8",
+  "kind": "dataset_link",
+  "title": "Dati sensori aria (ARPA Lombardia air-quality sensor readings, Regione Lombardia open data portal)",
+  "summary": "Open-data export of continuous readings from ARPA Lombardia's fixed air-quality monitoring stations, published on the Regione Lombardia portal (dataset nicp-bhqi). The sampled export has one row per sensor per timestamp with a sensor id, a timestamp, a value, a validity code and an operator id. The pollutant, station name and coordinates are not in the export columns, so the sensor-to-pollutant mapping is not established by this source. Coverage start and end dates were not stated in any source read, and the landing page is not a complete metadata record.",
+  "schema": {
+    "documented": "structured",
+    "field_count": 5,
+    "fields": [
+      {
+        "name": "IdSensore",
+        "description": "Sensor identifier (integer); no station or pollutant attribute in export",
+        "pii": false,
+        "type": "integer",
+        "unit": null
+      },
+      {
+        "name": "Data",
+        "description": "Timestamp, text in DD/MM/YYYY hh:mm:ss AM/PM format",
+        "pii": false,
+        "type": "text",
+        "unit": null
+      },
+      {
+        "name": "Valore",
+        "description": "Measured value; pollutant and unit not stated in the export",
+        "pii": false,
+        "type": "number",
+        "unit": "unknown"
+      },
+      {
+        "name": "Stato",
+        "description": "Validity/status code (sample shows 'VA')",
+        "pii": false,
+        "type": "text",
+        "unit": null
+      },
+      {
+        "name": "idOperatore",
+        "description": "Operator identifier (sample constant 1)",
+        "pii": false,
+        "type": "integer",
+        "unit": null
+      }
+    ],
+    "notes": "Field names are Italian and are only in the export header; no data dictionary was read. Pollutant is described in the portal's dataset description (NOX, SO2, CO, O3, PM10, PM2.5, benzene) but is not a column."
+  },
+  "temporal": {
+    "start": null,
+    "end": null,
+    "grain": "hourly",
+    "metadata_last_updated": "2026-11-24",
+    "open_ended": null,
+    "refresh_cadence": null
+  },
+  "spatial": {
+    "coverage": [
+      "IT"
+    ],
+    "code_system": "sensor id (IdSensore); no coordinates or region code in export",
+    "notes": "Description says stations are distributed across the Lombardy region; the spatial extent of the file is not stated in any source read. Sensor-to-station linkage is not in the export."
+  },
+  "ownership": {
+    "owner": null,
+    "publisher": null,
+    "steward": null
+  },
+  "licence": {
+    "name": "CC0 1.0",
+    "evidence": "inspect_dataset_link: licence.found_in = json-ld (license http://creativecommons.org/publicdomain/zero/1.0/legalcode); jsonld creator = ARPA LOMBARDIA; publisher field null",
+    "url": "http://creativecommons.org/publicdomain/zero/1.0/legalcode",
+    "attribution_text": null,
+    "commercial_use": "yes",
+    "agreement_status": "not_required_open_data (policy.open_data_links in list_external_register; prototyping, benchmarking, context approved; production needs Legal sign-off)",
+    "mixed_sources": null
+  },
+  "access": {
+    "method": "file_download",
+    "auth_required": false,
+    "reachable": true,
+    "request_process": "Landing page returned HTTP 200 (text/html). CSV export at https://www.dati.lombardia.it/api/v3/views/nicp-bhqi/export.csv returned HTTP 200 to a 200000-byte capped read. Also listed: query.xml and export.xlsx. Not in the external register; the candidate note expected allowlisting in G6, but the probe tool did read this host.",
+    "approx_size_bytes": null,
+    "classification": null
+  },
+  "declared_metadata": {
+    "license": "CC0 1.0 (json-ld)",
+    "creator": "ARPA LOMBARDIA",
+    "datePublished": "2017-11-20T07:51:42+00:00",
+    "dateModified": "2026-11-24T12:35:08+00:00",
+    "temporalCoverage": null,
+    "spatialCoverage": null,
+    "isAccessibleForFree": null,
+    "variableMeasured": null,
+    "has_missing_values": null,
+    "contains_pii": null
+  },
+  "documentation_excerpts": [
+    "La rete di rilevamento della qualità dell'aria di ARPA Lombardia è costituita da stazioni fisse che, per mezzo di analizzatori automatici, forniscono dati in continuo ad intervalli temporali regolari. Le specie di inquinanti monitorate in continuo sono NOX, SO2, CO, O3, PM10, PM2.5 e benzene. (jsonld description, inspect_dataset_link)",
+    "license: http://creativecommons.org/publicdomain/zero/1.0/legalcode (jsonld, inspect_dataset_link)"
+  ],
+  "sample_findings": [
+    "IdSensore (integer): 179 distinct sensor ids in 4177 sampled rows; min 5517, max 30166; no negatives, no zeros.",
+    "Data (text): DD/MM/YYYY hh:mm:ss AM/PM, e.g. '06/06/2026 12:00:00 AM', '13/06/2026 01:00:00 AM'; hourly timestamps; sample dates all in 2026 (first rows only).",
+    "Valore (number): sentinel -9999 in 186 sampled rows (about 4.5%) and 4.5% non-missing share is 95.5%; min 0.0, max 189.8; zero share 0.9%; negative_count 0 after sentinel(s) present; units not stated.",
+    "Stato (text): sentinel 'NA' in 186 rows (same rows as Valore -9999); only value in sample 'VA'.",
+    "idOperatore (integer): constant 1 in sample.",
+    "No pollutant, station name or coordinate column in the export; pollutant cannot be attributed per row from this file."
+  ],
+  "quality_notes": [
+    "Sentinel -9999 in Valore with Stato='NA' in about 4.5% of sampled rows; these must be removed before use (sample only).",
+    "Pollutant not identifiable per row: the export has no pollutant column and the sensor-to-pollutant map was not found. The landing description lists NOX, SO2, CO, O3, PM10, PM2.5 and benzene, but says stations differ in instrumentation.",
+    "Coverage: the sample starts in 2026, so the 2004-03-10 to 2005-04-04 prototype window is not evidenced by this file; the 2017 datePublished and the 2026 sample suggest a rolling feed, but full coverage was not established (sample is not whole file).",
+    "Metadata date conflict: datePublished 2017-11-20 vs dateModified 2026-11-24T12:35:08+00:00, which is after the use case as_of date 2026-10-15; treat as unverified.",
+    "The hourly grain is inferred from the timestamps (on the hour), not from a stated frequency.",
+    "Landing page description was truncated in the tool output; full dataset description, column dictionary and update frequency were not read.",
+    "Source is not in the external register; policy.open_data_links covers open datasets for prototyping, benchmarking and context only, and production use needs Legal sign-off.",
+    "Valore unit not stated (likely micrograms per cubic metre for pollutants, but not documented in what was read)."
+  ],
+  "provenance": [
+    {
+      "claim": "Landing page reachable (HTTP 200), title 'Dati sensori aria | Open Data Regione Lombardia', creator ARPA LOMBARDIA, datePublished 2017-11-20, dateModified 2026-11-24",
+      "evidence": "inspect_dataset_link https://www.dati.lombardia.it/Ambiente/Dati-sensori-aria/nicp-bhqi"
+    },
+    {
+      "claim": "Licence CC0 1.0 found in JSON-LD",
+      "evidence": "inspect_dataset_link licence.found_in=json-ld, licence_url creativecommons.org/publicdomain/zero/1.0/legalcode"
+    },
+    {
+      "claim": "CSV export has 5 columns (IdSensore, Data, Valore, Stato, idOperatore); -9999 sentinel in Valore; no pollutant column",
+      "evidence": "sample_data_file https://www.dati.lombardia.it/api/v3/views/nicp-bhqi/export.csv (200000 bytes read)"
+    },
+    {
+      "claim": "Open-data policy permits prototyping/benchmarking/context; production needs Legal sign-off; dati.lombardia.it is not an entry in the register",
+      "evidence": "list_external_register policy.open_data_links"
+    },
+    {
+      "claim": "No internal catalog or wiki documentation for this source",
+      "evidence": "search_internal_catalog 'Lombardia ARPA air quality sensor dataset nicp-bhqi' (no hits)"
+    }
+  ],
+  "unknowns": [
+    "Coverage start and end dates of the historical series (prototype window 2004-03-10 to 2005-04-04 unverified)",
+    "Pollutant for each IdSensore and the sensor-to-station and coordinate mapping",
+    "Units of Valore and meaning of Stato codes beyond 'VA' and 'NA'",
+    "Update frequency and whether the feed is still updating",
+    "Owner, steward and publisher (only creator ARPA LOMBARDIA in JSON-LD)",
+    "Full dataset description and column dictionary (landing text truncated)",
+    "Whether the candidate's expected G6 allowlisting is needed or applies to this host",
+    "Traffic, temperature and humidity are not in this source (N2, N3 not covered)"
+  ]
+}

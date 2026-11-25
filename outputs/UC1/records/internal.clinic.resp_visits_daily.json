@@ -1,0 +1,124 @@
+{
+  "source_id": "internal.clinic.resp_visits_daily",
+  "kind": "internal",
+  "title": "Respiratory visits (daily, by district), Clinical Analytics",
+  "summary": "Internal warehouse table of respiratory clinic visit counts per day and per district, owned by Clinical Analytics and stewarded by Chiara Conti. Per the catalog it has three columns (visit_date, district, visit_count), daily grain, about 40,000 rows, open-ended coverage from 2022-01-01 and a daily refresh (last refreshed 2026-10-14). It is aggregated and declared as containing no patient identifiers. The clinic data policy permits only this table, not patient-level visits, for surveillance analysis.",
+  "schema": {
+    "documented": "structured",
+    "field_count": 3,
+    "fields": [
+      {
+        "name": "visit_date",
+        "type": "date",
+        "description": "Day of the visits",
+        "unit": null,
+        "pii": false
+      },
+      {
+        "name": "district",
+        "type": "string",
+        "description": "District of residence (code system not documented)",
+        "unit": null,
+        "pii": false
+      },
+      {
+        "name": "visit_count",
+        "type": "integer",
+        "description": "Respiratory visits that day",
+        "unit": "visits per day per district",
+        "pii": false
+      }
+    ],
+    "notes": "Catalog columns only. District code system, small-cell suppression and handling of zero days are not documented in the catalog or the wiki page read."
+  },
+  "temporal": {
+    "start": "2022-01-01",
+    "end": null,
+    "grain": "daily",
+    "metadata_last_updated": "2026-10-14",
+    "open_ended": true,
+    "refresh_cadence": "daily"
+  },
+  "spatial": {
+    "coverage": [
+      "IT"
+    ],
+    "code_system": "free-text/undocumented district identifier (column 'district', type string)",
+    "notes": "Geography is the Valdena municipality districts (fictional client). Code system not documented; joins to station or traffic data (which use station_id/counter_id) need a district mapping that is not in the catalog."
+  },
+  "ownership": {
+    "owner": "Clinical Analytics",
+    "publisher": null,
+    "steward": "Chiara Conti"
+  },
+  "licence": {
+    "name": "internal",
+    "agreement_status": "not_applicable",
+    "commercial_use": "not_applicable",
+    "evidence": "catalog classification 'internal' (get_catalog_entry internal.clinic.resp_visits_daily); clinic_data_policy wiki page (owner Data Protection Office, last edited 2025-02-01) restricts use to daily district counts for surveillance purposes",
+    "mixed_sources": false,
+    "attribution_text": null,
+    "url": null
+  },
+  "access": {
+    "method": "warehouse_sql",
+    "auth_required": true,
+    "reachable": null,
+    "classification": "internal",
+    "request_process": "Request to Clinical Analytics (catalog access.request_process)",
+    "approx_size_bytes": null
+  },
+  "declared_metadata": {
+    "contains_pii": false,
+    "classification": "internal",
+    "grain": "daily",
+    "status": "active",
+    "row_count_approx": 40000,
+    "refresh_cadence": "daily",
+    "last_refreshed": "2026-10-14"
+  },
+  "documentation_excerpts": [
+    "Respiratory visits counted per day and per district. Contains no patient identifiers. (catalog description)",
+    "Only daily counts by district (`clinic.resp_visits_daily`) may be used for this purpose. (wiki clinic_data_policy, last edited 2025-02-01)",
+    "Patient postcode and age band are personal data. They must not leave the clinic systems for analysis. (wiki clinic_data_policy)"
+  ],
+  "sample_findings": [],
+  "quality_notes": [
+    "Not sampled: no sample tool is available for warehouse tables; no data values, zero-day handling or suppression of small counts could be checked.",
+    "Coverage: catalog temporal_coverage starts 2022-01-01 with end null (open-ended). The production window 2024-01-01 to 2025-12-31 falls inside the declared range, but completeness of the extract for that period is not verified.",
+    "Candidate's suspected issue 'data-sharing basis not confirmed' is partly resolved: the clinic_data_policy (2025-02-01) explicitly permits this table for this surveillance purpose. Whether that policy is the full basis (e.g. DPO sign-off for the specific project) is not stated in any page read.",
+    "Small-cell suppression rule is not documented in the catalog or in the wiki page read (clinic_data_policy); the search for suppression/district code terms returned no other page.",
+    "District code system is not documented; 'district of residence' means counts are assigned by patient residence, which may not match station catchments.",
+    "Candidate hypothesis that visit counts reflect opening hours and staffing is not documented anywhere read; it is a plausible confounder to test, not a recorded fact.",
+    "Grain is daily only: this cannot meet any hourly need (N1-N3) and cannot support the hourly warning model for the production window; it fits N4 (should, daily counts by district) only.",
+    "Catalog and candidate agree on owner, steward, grain and coverage start (2022-01-01); no disagreement found between catalog entry and wiki page."
+  ],
+  "provenance": [
+    {
+      "claim": "Table is daily grain, district-level, columns visit_date/district/visit_count, ~40,000 rows, open-ended from 2022-01-01, refreshed daily (last 2026-10-14), owner Clinical Analytics, steward Chiara Conti, contains_pii false",
+      "evidence": "get_catalog_entry internal.clinic.resp_visits_daily (also clinic.resp_visits_daily)"
+    },
+    {
+      "claim": "Only daily district counts may be used for surveillance; patient-level visits and patient postcode/age band are restricted personal data",
+      "evidence": "read_wiki_page clinic_data_policy (owner Data Protection Office, last_edited 2025-02-01)"
+    },
+    {
+      "claim": "No wiki page or catalog entry documents small-cell suppression or the district code system",
+      "evidence": "search_internal_catalog 'small cell suppression district code respiratory visits clinic' (no supporting hit beyond the catalog entry and policy page)"
+    },
+    {
+      "claim": "Access is via warehouse SQL with a request to Clinical Analytics; reachability not tested",
+      "evidence": "get_catalog_entry access block"
+    }
+  ],
+  "unknowns": [
+    "Whether the table is reachable and the extract is complete for 2024-2025 (not tested; no access granted in this profile)",
+    "Small-cell suppression rule and handling of days with zero visits",
+    "District code system and mapping to monitoring station catchments or traffic counters",
+    "Whether the clinic_data_policy is the complete data-sharing basis for the project or whether further DPO approval is needed",
+    "Whether visit counts are affected by opening hours or staffing (hypothesis only)",
+    "Full column list beyond the three catalog columns, and any reporting-date vs visit-date lag",
+    "Size in bytes (only approx row count of 40,000 is stated)"
+  ],
+  "status": "active"
+}

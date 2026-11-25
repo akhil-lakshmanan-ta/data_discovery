@@ -1,0 +1,123 @@
+{
+  "source_id": "api.open_meteo_archive",
+  "kind": "public_api",
+  "title": "Open-Meteo Historical Weather API (reanalysis), daily temperature_2m_max",
+  "summary": "Open-Meteo archive REST endpoint returning daily maximum 2 m air temperature (temperature_2m_max, °C) for a latitude/longitude point, with timezone set per request. Responses are modelled reanalysis values on a grid cell, not station observations. Probes confirmed data for 2023-06-01 to 2023-06-03, 2025-06-01 to 2025-06-03 and 2026-03-29 to 2026-03-31, which covers both use-case windows (history 2023-06-01 to 2025-05-31; recent 2025-06-01 to 2026-03-31). Grain is daily at a single point; the population is weather at one location, not at the shop.",
+  "schema": {
+    "documented": "structured",
+    "field_count": 2,
+    "fields": [
+      {
+        "name": "daily.time",
+        "description": "Date of the daily value, ISO 8601 (YYYY-MM-DD) in the requested timezone",
+        "pii": false,
+        "type": "date",
+        "unit": "iso8601"
+      },
+      {
+        "name": "daily.temperature_2m_max",
+        "description": "Daily maximum of 2 m air temperature",
+        "pii": false,
+        "type": "float",
+        "unit": "°C"
+      }
+    ],
+    "notes": "Response also carries latitude, longitude (snapped grid point), elevation, utc_offset_seconds, timezone and generationtime_ms. The register default_query also requests hourly temperature_2m and shortwave_radiation; these are not needed for N3 and should be dropped from calls to limit payload."
+  },
+  "temporal": {
+    "start": "2023-06-01",
+    "end": null,
+    "grain": "daily",
+    "metadata_last_updated": null,
+    "open_ended": true,
+    "refresh_cadence": "unknown"
+  },
+  "spatial": {
+    "coverage": [
+      "IT"
+    ],
+    "code_system": "decimal latitude/longitude (WGS84)",
+    "notes": "Register default point 45.46, 9.19 (Milan area) was used for probes; the response snapped to grid point 45.448154, 9.169279, elevation 138 m. The shop's city is not named in any internal source, so the point is an unconfirmed assumption and must be recorded in decisions.md. Any point in northern Italy will work technically, but the chosen point drives the temperature values."
+  },
+  "ownership": {
+    "owner": null,
+    "publisher": "Open-Meteo.com (provider of the API; per https://open-meteo.com/en/licence)",
+    "steward": null
+  },
+  "licence": {
+    "name": "CC BY 4.0 (API data, as stated by provider); underlying upstream sources carry their own terms",
+    "evidence": "probe_url https://open-meteo.com/en/licence: API data are offered under Attribution 4.0 International (CC BY 4.0). The same page lists upstream sources with their own licences, including Weather reanalysis from Copernicus Climate Change Service C3S (Licence), DWD (CC-BY) and UK Met Office (CC-BY-SA). The page also says Open-Meteo source code is AGPLv3, which does not apply to the data.",
+    "mixed_sources": true,
+    "url": "https://open-meteo.com/en/licence",
+    "agreement_status": "not_required_open_data (register: api.open_meteo_archive; policy.open_data_links)",
+    "commercial_use": "unknown",
+    "attribution_text": "Weather data by Open-Meteo.com, with a link to https://open-meteo.com/"
+  },
+  "access": {
+    "method": "rest_api",
+    "auth_required": false,
+    "reachable": true,
+    "request_process": "GET https://archive-api.open-meteo.com/v1/archive with latitude, longitude, start_date, end_date (YYYY-MM-DD), daily=temperature_2m_max, timezone=Europe/Rome. Keep probe ranges short. Production use needs Legal sign-off per policy.open_data_links, even though the register lists production as approved for this source.",
+    "approx_size_bytes": null
+  },
+  "declared_metadata": {
+    "agreement_status": "not_required_open_data",
+    "approved_purposes": [
+      "prototyping",
+      "production"
+    ],
+    "docs_url": "https://open-meteo.com/en/docs/historical-weather-api",
+    "terms_url": "https://open-meteo.com/en/licence",
+    "register_coverage_note": "Candidate note said coverage was to be confirmed; this profile confirmed it only by probes at the start and end of the windows."
+  },
+  "documentation_excerpts": [
+    "API data are offered under Attribution 4.0 International (CC BY 4.0) (https://open-meteo.com/en/licence)",
+    "Weather reanalysis, air quality forecasts and elevation data from Copernicus Climate Change Service C3S (Licence) (https://open-meteo.com/en/licence)",
+    "Register param_notes: latitude/longitude decimal degrees; start_date/end_date YYYY-MM-DD; hourly or daily variable lists. Keep probe ranges to a few days."
+  ],
+  "quality_notes": [
+    "Modelled reanalysis data, not station observations. Daily maxima at a grid point can differ from a measuring station in the same city; this is a known limitation for the N3 question.",
+    "Coordinates are snapped to a model grid cell (requested 45.46, 9.19; returned 45.448154, 9.169279, elevation 138 m). The shop location is not known; the choice is an assumption.",
+    "Timezone: probes with timezone=Europe/Rome returned utc_offset_seconds 3600. Daily values are aligned to local dates only if timezone is set explicitly; the register default is UTC.",
+    "Register default_query is hourly (temperature_2m, shortwave_radiation) and dated 2014-01-01 to 2014-01-03. The daily variable and the use-case dates must be set in each call; the default 2014 dates are not the use-case windows.",
+    "Coverage: probes returned data for 2023-06-01 to 2023-06-03, 2025-06-01 to 2025-06-03 and 2026-03-29 to 2026-03-31. The earliest available date and the update lag were not tested beyond these windows, so the true start and the freshness of the archive are not confirmed.",
+    "Licence: CC BY 4.0 applies to the API data as stated by the provider, but the page lists upstream sources (including Copernicus C3S) with their own licence terms. Commercial use is not stated for the combined data. Legal review needed before production use.",
+    "No documented cadence or metadata-last-updated date was found."
+  ],
+  "provenance": [
+    {
+      "claim": "Endpoint and register status: https://archive-api.open-meteo.com/v1/archive, agreement not required (open data), approved for prototyping and production, default query is hourly with timezone UTC and dates 2014-01-01 to 2014-01-03.",
+      "evidence": "list_external_register (api.open_meteo_archive)"
+    },
+    {
+      "claim": "Daily temperature_2m_max returned in °C for 2025-06-01 to 2025-06-03 (values 30.7, 27.3, 24.5), with timezone Europe/Rome and utc_offset 3600 s.",
+      "evidence": "call_public_api api.open_meteo_archive start_date 2025-06-01 end_date 2025-06-03 daily=temperature_2m_max"
+    },
+    {
+      "claim": "Data returned for 2023-06-01 to 2023-06-03 (values 25.3, 25.7, 24.9).",
+      "evidence": "call_public_api api.open_meteo_archive start_date 2023-06-01 end_date 2023-06-03"
+    },
+    {
+      "claim": "Data returned for 2026-03-29 to 2026-03-31 (values 18.2, 19.2, 15.5), so the recent window end is covered.",
+      "evidence": "call_public_api api.open_meteo_archive start_date 2026-03-29 end_date 2026-03-31"
+    },
+    {
+      "claim": "Grid snapping: returned latitude 45.448154, longitude 9.169279, elevation 138 m.",
+      "evidence": "call_public_api api.open_meteo_archive shape fields"
+    },
+    {
+      "claim": "API data licence CC BY 4.0; upstream C3S and other national-service licences listed separately; attribution text Weather data by Open-Meteo.com.",
+      "evidence": "probe_url https://open-meteo.com/en/licence"
+    }
+  ],
+  "unknowns": [
+    "Shop location (city or coordinates) is not documented in any internal source; the grid point used is an assumption to be recorded in decisions.md.",
+    "Earliest date available in the archive and the update lag / freshness are not confirmed beyond the probed dates.",
+    "Whether the underlying reanalysis is ERA5 or another product is not named on the licence page read; the product and version are unknown.",
+    "Commercial-use permission for the combined data and the legal position for production use are not established; Legal sign-off required.",
+    "Owner and steward inside Open-Meteo are not stated; no metadata-last-updated date or refresh cadence is documented.",
+    "Accuracy of daily maxima against local station observations for northern Italy was not assessed; no validation source was checked.",
+    "Docs at https://open-meteo.com/en/docs/historical-weather-api were not read."
+  ],
+  "status": "active"
+}

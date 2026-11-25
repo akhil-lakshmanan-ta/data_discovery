@@ -1,0 +1,57 @@
+{
+  "reviewer": "Akhil Lakshmanan",
+  "verdict": "proceed_with_conditions",
+  "conditions": [
+    {
+      "text": "Obtain access approval and confirm warehouse reachability for internal.airq.station_readings, resolve VR-03 status/gap handling, and update catalog status",
+      "owner": "Environment Monitoring Unit",
+      "due": "2026-12-15"
+    },
+    {
+      "text": "Document counter-break adjustment for 2024-03-18, provide counter coordinates or station mapping, confirm time zone and DST handling, and test 2024-2025 access for internal.traffic.hourly_counts",
+      "owner": "Mobility Office",
+      "due": "2026-12-15"
+    },
+    {
+      "text": "Confirm Copernicus C3S licence terms and commercial-use position for api.open_meteo_archive, record confirmed Valdena coordinates in decisions.md, and run full-range missing-value checks",
+      "owner": "Legal",
+      "due": "2026-12-15"
+    },
+    {
+      "text": "Resolve the CC BY 4.0 vs research-only conflict for link.uci_360, map -200 sentinels to null, and restrict usage to prototype method-building only",
+      "owner": "Legal",
+      "due": "2026-12-05"
+    },
+    {
+      "text": "Obtain full dataset documentation and schema dictionary for link.lombardia_nicp_bhqi_eba0c8, verify 2004-2005 prototype coverage, and handle -9999 / NA sentinel entries before relying on it",
+      "owner": "Data lead",
+      "due": "2026-12-10"
+    },
+    {
+      "text": "Confirm whether a live warning use fits within the clinic data policy surveillance purpose, document district codes and small-cell suppression, and approve access for internal.clinic.resp_visits_daily",
+      "owner": "Data Protection Office",
+      "due": "2026-12-15"
+    },
+    {
+      "text": "Confirm reuse licence terms for link.europa_sdg_11_52_099aa6 if used for national annual context on could need N6",
+      "owner": "Legal",
+      "due": "2026-12-15"
+    }
+  ],
+  "agreements": [
+    {
+      "source_id": "link.europa_sdg_11_52_099aa6",
+      "reason": "Keeping link.europa_sdg_11_52_099aa6 as feasible_with_conditions rather than rejecting it fits rule 2 because N6 is a could need, even though LIC-UNKNOWN is a blocker and coverage is partial (2005 and 2007-2023)."
+    },
+    {
+      "source_id": "link.data_open_air_chicago_hour_aggre_d4970b",
+      "reason": "Marking the Chicago link not_feasible is right because catalog.data.gov is outside UC1's Italian geography and intentionally blocked by the allowlist guardrail."
+    }
+  ],
+  "overrides": [],
+  "traced_conclusion": {
+    "source_id": "link.uci_360",
+    "record_field": "temporal.end",
+    "could_change_if": "If the prototype window were shifted to 2024-2025 instead of 2004-03-10 to 2005-04-04, temporal.end (2005-04-04) would make the source stale for that window rather than usable for prototype method-building."
+  }
+}

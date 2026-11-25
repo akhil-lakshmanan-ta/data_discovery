@@ -1,0 +1,129 @@
+{
+  "source_id": "api.open_meteo_archive",
+  "kind": "public_api",
+  "title": "Open-Meteo Historical Weather API (reanalysis)",
+  "summary": "Gridded hourly historical weather reanalysis served by the Open-Meteo archive API. Probed at the register default point (45.46, 9.19, Milan area; returned grid point 45.448154, 9.169279, elevation 138 m). Variables requested in probes were temperature_2m and relative_humidity_2m in UTC. It is a model product, not station observations, and is not a source of traffic or pollutant data. Both probe windows (2004-03-10 to 2004-03-12 and 2024-01-01 to 2024-01-02) returned data, so coverage of the prototype and production windows is confirmed at the probe level only.",
+  "schema": {
+    "documented": "structured",
+    "field_count": 3,
+    "fields": [
+      {
+        "name": "time",
+        "description": "Hourly timestamp, ISO8601 (returned without offset; timezone GMT when timezone=UTC requested)",
+        "pii": false,
+        "type": "datetime",
+        "unit": "iso8601"
+      },
+      {
+        "name": "temperature_2m",
+        "description": "Air temperature at 2 m",
+        "pii": false,
+        "type": "float",
+        "unit": "°C"
+      },
+      {
+        "name": "relative_humidity_2m",
+        "description": "Relative humidity at 2 m (must be requested explicitly; not in register default_query)",
+        "pii": false,
+        "type": "float",
+        "unit": "%"
+      }
+    ],
+    "notes": "Other hourly variables exist in the API but were not probed. Response is JSON with hourly arrays plus hourly_units. Documentation URL https://open-meteo.com/en/docs/historical-weather-api was not read."
+  },
+  "temporal": {
+    "start": null,
+    "end": null,
+    "grain": "hourly",
+    "metadata_last_updated": null,
+    "open_ended": null,
+    "refresh_cadence": "unknown"
+  },
+  "spatial": {
+    "coverage": [
+      "IT"
+    ],
+    "code_system": "decimal latitude/longitude (point query, snapped to model grid)",
+    "notes": "Register default point 45.46, 9.19 (Milan area). The API returned grid point 45.448154, 9.169279. The client city (Valdena) is fictional and not located in any source read; the point must be confirmed and recorded in decisions.md before use. The register default is not Lisbon, contrary to the candidate's suspected_issues note."
+  },
+  "ownership": {
+    "owner": null,
+    "publisher": "Open-Meteo.com (provider; legal entity not established)",
+    "steward": null
+  },
+  "licence": {
+    "name": "CC BY 4.0 (for Open-Meteo API data, as stated by the provider); underlying reanalysis from Copernicus C3S carries its own licence, not read",
+    "evidence": "probe_url https://open-meteo.com/en/licence (2026 page text: 'API data are offered under Attribution 4.0 International (CC BY 4.0)'; lists 'Weather reanalysis, air quality forecasts and elevation data from Copernicus Climate Change Service C3S ( Licence )' with a separate C3S licence link). Register terms_url https://open-meteo.com/en/licence.",
+    "mixed_sources": true,
+    "agreement_status": "not_required_open_data (register: api.open_meteo_archive; approved_purposes prototyping, production)",
+    "commercial_use": "unknown",
+    "url": "https://open-meteo.com/en/licence",
+    "attribution_text": "Weather data by Open-Meteo.com (link required per provider licence page); Open-Meteo citation: Zippenfenig, P. (2023), doi 10.5281/ZENODO.7970649"
+  },
+  "access": {
+    "method": "rest_api",
+    "auth_required": false,
+    "reachable": true,
+    "approx_size_bytes": null,
+    "request_process": "Open GET to https://archive-api.open-meteo.com/v1/archive with latitude, longitude, start_date, end_date, hourly, timezone. Keep probe ranges to a few days. Production use may need Legal sign-off under policy.open_data_links."
+  },
+  "declared_metadata": {
+    "has_missing_values": null,
+    "contains_pii": false,
+    "register_agreement_status": "not_required_open_data",
+    "register_approved_purposes": [
+      "prototyping",
+      "production"
+    ],
+    "register_default_query": {
+      "latitude": "45.46",
+      "longitude": "9.19",
+      "start_date": "2014-01-01",
+      "end_date": "2014-01-03",
+      "hourly": "temperature_2m,shortwave_radiation",
+      "timezone": "UTC"
+    }
+  },
+  "documentation_excerpts": [
+    "Register param_notes: 'latitude/longitude decimal degrees; start_date/end_date YYYY-MM-DD; hourly or daily variable lists. Keep probe ranges to a few days.'",
+    "Licence page: 'API data are offered under Attribution 4.0 International (CC BY 4.0)'",
+    "Licence page: 'Weather reanalysis, air quality forecasts and elevation data from Copernicus Climate Change Service C3S ( Licence )'"
+  ],
+  "quality_notes": [
+    "Model reanalysis, not station observations: humidity and temperature at 2 m may differ from station readings. Not a substitute for the city's own station data (production window).",
+    "Does not cover N1 (pollutants) or N2 (traffic); it only fits N3 (temperature and humidity).",
+    "Register default_query returns temperature_2m and shortwave_radiation only; relative_humidity_2m must be requested explicitly (confirmed by probe with the explicit variable list).",
+    "Probe sample 2024-01-01 to 2024-01-02 (45.448154, 9.169279): temperature_2m values 5.6, 6.1, 5.0 and relative_humidity_2m values 98, 96, 97; 48 hourly rows, no nulls in the visible values. Probe 2004-03-10 to 2004-03-12: temperature_2m -1.0, -1.0, -1.2 and relative_humidity_2m 85, 86, 87; 72 rows. Negative temperatures are plausible for March in northern Italy and are not sentinels. Only the first values were visible, so missing-value checks on the full ranges were not done.",
+    "Register and candidate disagree on the default location: the candidate note says the brief's default is Lisbon, but the register default is 45.46, 9.19 (Milan area). Neither is the client city; the city is not named in any source read.",
+    "Licence page header shows 'Last modified: Tue, 24 Nov 2026', which is after the use case as_of date of 2026-10-15; treat the page date as unverified.",
+    "Licence mixed: the API data is stated as CC BY 4.0, but the page separately lists C3S reanalysis under its own licence, which was not read. The C3S-derived series may carry Copernicus licence conditions. Commercial-use position is unknown."
+  ],
+  "provenance": [
+    {
+      "claim": "Endpoint https://archive-api.open-meteo.com/v1/archive, register default point 45.46/9.19, default variables temperature_2m and shortwave_radiation, approved purposes prototyping and production, agreement not_required_open_data",
+      "evidence": "list_external_register (api.open_meteo_archive)"
+    },
+    {
+      "claim": "API responds with hourly temperature and relative humidity for 2024-01-01 to 2024-01-02 (48 rows) and for 2004-03-10 to 2004-03-12 (72 rows); grid point 45.448154, 9.169279, elevation 138 m",
+      "evidence": "call_public_api api.open_meteo_archive (two probes, start_date 2024-01-01 and 2004-03-10)"
+    },
+    {
+      "claim": "CC BY 4.0 for API data; C3S reanalysis carries its own licence; attribution required",
+      "evidence": "probe_url https://open-meteo.com/en/licence"
+    },
+    {
+      "claim": "Documentation URL and terms URL",
+      "evidence": "list_external_register docs_url https://open-meteo.com/en/docs/historical-weather-api; terms_url https://open-meteo.com/en/licence"
+    }
+  ],
+  "unknowns": [
+    "Start and end of the full archive coverage: the documentation page was not read; probes only confirm the two probe windows return data.",
+    "Whether the historical API's underlying dataset is ERA5 or another reanalysis, its resolution and any cell-level gaps: not stated in sources read.",
+    "Client city location (Valdena is fictional) and therefore the correct coordinates: not established in any source read; decision needed.",
+    "Licence terms that apply to the C3S-derived reanalysis data and whether commercial use is permitted: not read.",
+    "Full-range missing-value and quality checks: only the first hours of two probe windows were visible.",
+    "Owner, steward and legal-entity details of Open-Meteo: not stated in sources read.",
+    "Refresh cadence and latency of the archive: not stated in sources read."
+  ],
+  "status": "active"
+}

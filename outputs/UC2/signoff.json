@@ -1,0 +1,26 @@
+{
+  "reviewer": "Akhil Lakshmanan",
+  "verdict": "stop",
+  "conditions": [],
+  "agreements": [
+    {
+      "source_id": "internal.sales.products",
+      "reason": "Agree that N2 is unmet because internal.sales.products holds only current codes with no version or effective-date history, so retired pre-2024 'L' codes cannot be reliably mapped across the history window."
+    },
+    {
+      "source_id": "internal.sales.daily_by_product",
+      "reason": "Agree that access is confidential and untested, net/gross and timezone definitions are undocumented, and the 2024-02-05 to 2024-03-10 till migration gap must be treated as missing rather than zero."
+    }
+  ],
+  "overrides": [
+    {
+      "source_id": "api.nager_public_holidays",
+      "reason": "Overrule treating api.nager_public_holidays as feasible_with_conditions for production until a holiday data licence is verified (LIC-UNKNOWN is a blocker) and Easter plus the 2026 holiday list are verified against an official Italian source, or replace N4 with an official Italian holiday calendar."
+    }
+  ],
+  "traced_conclusion": {
+    "source_id": "api.open_meteo_archive",
+    "record_field": "licence.commercial_use",
+    "could_change_if": "If Legal confirms in writing that commercial production use is permitted under the combined Copernicus C3S, DWD, and UK Met Office upstream terms, the licensing blocker for production use on N3 would be cleared."
+  }
+}

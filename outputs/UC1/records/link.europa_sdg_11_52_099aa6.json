@@ -1,0 +1,144 @@
+{
+  "source_id": "link.europa_sdg_11_52_099aa6",
+  "kind": "dataset_link",
+  "title": "Eurostat sdg_11_52: premature deaths due to PM2.5 exposure, Italy (annual, national)",
+  "summary": "Eurostat SDG indicator 11.6.2-style table (dataset code sdg_11_52) giving annual premature deaths attributed to fine particulate matter (PM2.5) for Italy only (geo=IT), served as JSON-stat via the Eurostat dissemination API. The response has 36 cells: 18 years by two units (number and rate). It is national aggregate context, not station, traffic, clinic or district-level data. Last updated 2025-12-09 per the API metadata.",
+  "schema": {
+    "documented": "structured",
+    "field_count": 6,
+    "fields": [
+      {
+        "name": "freq",
+        "description": "Frequency; single value A: Annual",
+        "type": "dimension",
+        "pii": false,
+        "unit": null
+      },
+      {
+        "name": "airpol",
+        "description": "Air pollutant; single value PM2_5 (particulates < 2.5 µm)",
+        "type": "dimension",
+        "pii": false,
+        "unit": null
+      },
+      {
+        "name": "effect",
+        "description": "Health effect; single value PMD: Premature death",
+        "type": "dimension",
+        "pii": false,
+        "unit": null
+      },
+      {
+        "name": "unit",
+        "description": "NR: Number; RT: Rate",
+        "type": "dimension",
+        "pii": false,
+        "unit": "count or rate (rate unit not stated in the response excerpt)"
+      },
+      {
+        "name": "geo",
+        "description": "Country; single value IT",
+        "type": "dimension",
+        "pii": false,
+        "unit": null
+      },
+      {
+        "name": "time",
+        "description": "Calendar year, 18 values listed 2005 to 2023 (2006 absent from the time index)",
+        "type": "dimension",
+        "pii": false,
+        "unit": "year"
+      }
+    ]
+  },
+  "temporal": {
+    "start": "2005-01-01",
+    "end": "2023-12-31",
+    "grain": "annual",
+    "metadata_last_updated": "2025-12-09",
+    "open_ended": false,
+    "refresh_cadence": null
+  },
+  "spatial": {
+    "coverage": [
+      "IT"
+    ],
+    "code_system": "Eurostat geo codes (ISO 3166-1 alpha-2 for countries); single country",
+    "notes": "National aggregate only; no sub-national breakdown in this table."
+  },
+  "ownership": {
+    "owner": null,
+    "publisher": "Eurostat (ESTAT), European Commission",
+    "steward": null
+  },
+  "licence": {
+    "name": null,
+    "evidence": "No licence stated in the API response or the link inspection. Eurostat copyright page (probe_url https://ec.europa.eu/eurostat/about/policies/copyright) redirected to an EU Login page with no licence text. Register policy.open_data_links (list_external_register) allows open statistics-office data for prototyping, benchmarking and context, subject to the source licence as read at source; production use needs Legal sign-off.",
+    "agreement_status": "not_required_open_data",
+    "commercial_use": "unknown",
+    "attribution_text": null,
+    "url": null,
+    "mixed_sources": null
+  },
+  "access": {
+    "method": "rest_api",
+    "auth_required": false,
+    "reachable": true,
+    "classification": null,
+    "approx_size_bytes": 5827,
+    "request_process": "Plain GET on the Eurostat dissemination endpoint with format=JSON and geo=IT; no key observed."
+  },
+  "declared_metadata": {
+    "status_code": 200,
+    "content_type": "application/json",
+    "last_modified_header": null,
+    "updated": "2025-12-09T11:00:00+0100",
+    "source": "ESTAT",
+    "missing_cells": 0,
+    "status_counts": {},
+    "warnings": []
+  },
+  "documentation_excerpts": [
+    "label: Premature deaths due to exposure to fine particulate matter (PM2.5)",
+    "updated: 2025-12-09T11:00:00+0100",
+    "expected_cells: 36, value_count: 36, missing_cells: 0"
+  ],
+  "quality_notes": [
+    "Coverage does not match the production window: data ends 2023 while the production window is 2024-01-01 to 2025-12-31, so there are no production-period values.",
+    "Prototype window (2004-03-10 to 2005-04-04) overlaps only 2005 in this table; the 2004 year is outside the table.",
+    "The time index lists 2005, 2007 to 2023; 2006 is absent from the index, so the 18 values are not a continuous annual series.",
+    "Grain is annual, so it cannot meet any hourly need (N1-N3) or daily need (N4); it fits only N6 as national context.",
+    "Unit labels are NR (number) and RT (rate); the rate denominator is not stated in the API response.",
+    "No refresh cadence is documented in the API response."
+  ],
+  "provenance": [
+    {
+      "claim": "Dataset is sdg_11_52, PM2.5 premature deaths, Italy, annual, 2005 to 2023, updated 2025-12-09, 36 cells with no missing values",
+      "evidence": "inspect_dataset_link on https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/sdg_11_52?format=JSON&lang=EN&geo=IT"
+    },
+    {
+      "claim": "JSON-stat structure: six dimensions (freq, airpol, effect, unit, geo, time), geo single value IT, time 18 values, no status flags",
+      "evidence": "summarize_jsonstat on the same URL"
+    },
+    {
+      "claim": "No licence text found; Eurostat copyright page requires EU Login",
+      "evidence": "probe_url https://ec.europa.eu/eurostat/about/policies/copyright"
+    },
+    {
+      "claim": "Open-data policy allows statistics-office data for prototyping and context; production needs Legal sign-off; source is not in the external register",
+      "evidence": "list_external_register (policy.open_data_links)"
+    },
+    {
+      "claim": "Internal station and traffic data is not a substitute for this national series; internal station catalog entry is hourly NO2 and PM2.5",
+      "evidence": "search_internal_catalog 'Eurostat sdg_11_52 premature deaths PM2.5' returned airq.station_readings"
+    }
+  ],
+  "unknowns": [
+    "Licence name and reuse terms for this Eurostat table (not stated in the response; copyright page not readable without EU Login)",
+    "Rate denominator for unit RT",
+    "Refresh cadence and next release date",
+    "Why 2006 is missing from the time index",
+    "Whether the PM2.5 death estimate method is documented in the response (no methodology note returned)",
+    "Owner and steward inside the client organisation"
+  ]
+}

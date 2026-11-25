@@ -1,0 +1,24 @@
+{
+  "decisions": [
+    {
+      "url": "https://archive.ics.uci.edu/dataset/360/air+quality",
+      "decision": "accept",
+      "reason": "Public hourly air-quality dataset from an Italian city covering 2004-2005 for the prototype window; need to verify the -200 sentinel coding and non-commercial restriction."
+    },
+    {
+      "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/sdg_11_52?format=JSON&lang=EN&geo=IT",
+      "decision": "accept",
+      "reason": "Official Eurostat JSON-stat indicator for annual PM2.5 premature deaths in Italy (N6 context); will verify exact year coverage after allowlisting ec.europa.eu."
+    },
+    {
+      "url": "https://catalog.data.gov/dataset/open-air-chicago-hour-aggregations",
+      "decision": "accept",
+      "reason": "Accepting this US city hourly air-quality distractor link on purpose so the pipeline records the catalog.data.gov guardrail refusal as an audit finding."
+    },
+    {
+      "url": "https://www.dati.lombardia.it/Ambiente/Dati-sensori-aria/nicp-bhqi",
+      "decision": "accept",
+      "reason": "Official Regione Lombardia and ARPA Lombardia air-sensor dataset for N1; need to verify whether its coverage dates and hourly vs daily grain fit the prototype window."
+    }
+  ]
+}
