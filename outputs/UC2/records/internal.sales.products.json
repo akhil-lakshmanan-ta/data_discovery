@@ -1,0 +1,111 @@
+{
+  "source_id": "internal.sales.products",
+  "kind": "internal",
+  "title": "Product list (current product codes, names, categories)",
+  "summary": "Reference table of current product codes, product names and categories held in the Valdena Gelato warehouse (about 64 rows, static grain, owned by Retail Operations). It lists only the codes in use after the 2024 code change and carries no version or effective date. It cannot map pre-2024 codes to current codes; the wiki states that no mapping table exists and that matching must be done by name, which is not unique for all products.",
+  "status": "active",
+  "schema": {
+    "documented": "structured",
+    "field_count": 3,
+    "fields": [
+      {
+        "name": "product_code",
+        "type": "string",
+        "description": "Current product code",
+        "pii": false
+      },
+      {
+        "name": "product_name",
+        "type": "string",
+        "description": "Product name",
+        "pii": false
+      },
+      {
+        "name": "category",
+        "type": "string",
+        "description": "Product category",
+        "pii": false
+      }
+    ],
+    "notes": "Columns and types from catalog entry only. No effective-date or code-version column."
+  },
+  "temporal": {
+    "start": null,
+    "end": null,
+    "grain": "static",
+    "metadata_last_updated": "2025-03-31",
+    "open_ended": null,
+    "refresh_cadence": "on change"
+  },
+  "spatial": {
+    "coverage": [],
+    "code_system": null,
+    "notes": "No geography is documented for this table. Not established whether it is shop-specific."
+  },
+  "ownership": {
+    "owner": "Retail Operations",
+    "publisher": null,
+    "steward": "Marco Bianchi"
+  },
+  "licence": {
+    "name": "internal",
+    "evidence": "Catalog entry internal.sales.products: classification 'internal'; no separate licence field. Wiki product_codes_2024 owner Retail Operations.",
+    "commercial_use": "not_applicable",
+    "agreement_status": null,
+    "attribution_text": null,
+    "mixed_sources": false,
+    "url": null
+  },
+  "access": {
+    "method": "warehouse_sql",
+    "auth_required": null,
+    "reachable": null,
+    "approx_size_bytes": null,
+    "classification": "internal",
+    "request_process": "Open to analytics roles (catalog entry internal.sales.products). Not probed: no warehouse query was run, so reachability is unverified."
+  },
+  "declared_metadata": {
+    "contains_pii": false,
+    "classification": "internal",
+    "row_count_approx": 64,
+    "refresh_cadence": "on change",
+    "last_refreshed": "2025-03-31"
+  },
+  "documentation_excerpts": [
+    "Current product codes, names and categories. (catalog internal.sales.products, description)",
+    "From 2024-04-01, product codes changed. Codes ending in \"L\" were replaced by new codes. No mapping table exists between the old and new codes. Old and new codes can only be matched by product name, and some names are not unique. `sales.products` lists only the current codes. (wiki product_codes_2024, last edited 2024-04-02)"
+  ],
+  "quality_notes": [
+    "Does not serve N2 on its own: lists current codes only, so retired pre-2024 codes (those ending in 'L') are absent.",
+    "No mapping table exists between old and new codes (wiki product_codes_2024, 2024-04-02). Any mapping must be built by name, and some names are not unique, so it would be ambiguous.",
+    "Catalog temporal_coverage is null/null; no effective dates for product names or codes, so the table cannot show which code applied on which day.",
+    "Last refreshed 2025-03-31 with refresh cadence 'on change' (catalog). Changes after that date, if any, are not reflected; catalog exported 2026-10-14 still shows 2025-03-31 as last refresh, which is not evidence that no change happened.",
+    "The product list is the name side of the match only. The sales table that uses these codes (sales.daily_by_product) is a separate source. Wiki till_migration_2024 (last edited 2024-03-12) says no sales were recorded 2024-02-05 to 2024-03-10 and those days should be treated as missing, not zero; this affects the daily sales source, not this table."
+  ],
+  "provenance": [
+    {
+      "claim": "Table is a static reference of current product codes, names and categories, 3 columns, approx 64 rows, owner Retail Operations, steward Marco Bianchi, refresh 'on change', last refreshed 2025-03-31.",
+      "evidence": "get_catalog_entry internal.sales.products"
+    },
+    {
+      "claim": "Code change on 2024-04-01: codes ending in 'L' replaced; no mapping table exists; match by name only, names not unique; sales.products lists only current codes.",
+      "evidence": "read_wiki_page product_codes_2024 (last_edited 2024-04-02)"
+    },
+    {
+      "claim": "Till system replaced 2024-02-05 to 2024-03-10 with no sales recorded; treat as missing; sales.daily_by_product has no rows for those days.",
+      "evidence": "read_wiki_page till_migration_2024 (last_edited 2024-03-12)"
+    },
+    {
+      "claim": "Table is described as the product-name reference only and is linked from the code-change wiki page; sales.daily_by_product uses product_code referencing this list.",
+      "evidence": "search_internal_catalog 'product codes 2024 code change mapping retired codes'; catalog sales.daily_by_product snippet"
+    }
+  ],
+  "unknowns": [
+    "Whether the warehouse table is reachable and what it currently contains (no SQL query was run).",
+    "Whether product names or codes changed after 2025-03-31.",
+    "Exact list of pre-2024 codes and their names; not in this table or in any wiki page reviewed.",
+    "Whether the table is specific to the Valdena shop or to a wider group (no geography documented).",
+    "Licence beyond the internal classification; no terms or data-use agreement applies to internal data as documented.",
+    "Number of duplicate product names and which products are affected (wiki says only 'some names are not unique')."
+  ]
+}

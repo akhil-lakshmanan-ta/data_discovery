@@ -1,0 +1,82 @@
+{
+  "source_id": "link.data_open_air_chicago_hour_aggre_d4970b",
+  "kind": "dataset_link",
+  "title": "Open Air Chicago hourly aggregations (catalog.data.gov link, not reachable from this environment)",
+  "summary": "A human-supplied link to a US open-data catalogue record titled \"Open Air Chicago hour aggregations\", described as hourly air-quality sensor data from a US city. The link could not be opened: the host catalog.data.gov is not on the egress allowlist, so no metadata, schema, coverage dates, licence or sample could be read. The source is therefore unverified and its geography (Chicago, US) falls outside the use case's primary geography (IT).",
+  "schema": {
+    "documented": "none",
+    "fields": [],
+    "field_count": null,
+    "notes": "No schema could be read; the host was refused before any metadata was fetched."
+  },
+  "temporal": {
+    "start": null,
+    "end": null,
+    "grain": "unknown",
+    "metadata_last_updated": null,
+    "open_ended": null,
+    "refresh_cadence": null
+  },
+  "spatial": {
+    "coverage": [
+      "US"
+    ],
+    "code_system": null,
+    "notes": "Candidate and link title indicate Chicago, United States. Not Italy; the use case's primary geography is IT, so this would not serve the Valdena Italian station data and is at best a method-prototype analogue. Coverage not verified."
+  },
+  "ownership": {
+    "owner": null,
+    "publisher": null,
+    "steward": null
+  },
+  "licence": {
+    "name": null,
+    "evidence": "No licence statement could be read: inspect_dataset_link on https://catalog.data.gov/dataset/open-air-chicago-hour-aggregations returned DOMAIN_NOT_ALLOWLISTED, so no licence text was reviewed.",
+    "agreement_status": null,
+    "attribution_text": null,
+    "commercial_use": "unknown",
+    "url": null,
+    "mixed_sources": null
+  },
+  "access": {
+    "method": "dataset_link (landing page)",
+    "auth_required": null,
+    "reachable": false,
+    "classification": null,
+    "approx_size_bytes": null,
+    "request_process": "Host catalog.data.gov is not on config/allowlist.json. Approval of this host for the allowlist would be needed before the record can be inspected. Not pursued further per guardrail."
+  },
+  "declared_metadata": {},
+  "documentation_excerpts": [],
+  "quality_notes": [
+    "Source unreachable: inspect_dataset_link returned DOMAIN_NOT_ALLOWLISTED for host catalog.data.gov. No data file, schema or documentation was examined.",
+    "Geography mismatch: the candidate describes a US city (Chicago); the use case primary geography is IT and the stated need is for Valdena station data. Even if reachable, the source would not cover the client's stations.",
+    "Candidate's suspected_issues list is empty, but the candidate was supplied by human input without verification; the 'hourly' grain is taken from the candidate's description and title only, not from a source document.",
+    "Unverified claim carried from candidate: 'hourly air-quality sensor data'. Pollutant types and whether they include NO2 or PM2.5 are unknown.",
+    "Coverage against the prototype window (2004-03-10 to 2005-04-04) is unknown and cannot be checked while the host is refused."
+  ],
+  "provenance": [
+    {
+      "claim": "The link https://catalog.data.gov/dataset/open-air-chicago-hour-aggregations could not be inspected; host catalog.data.gov is not on the egress allowlist.",
+      "evidence": "inspect_dataset_link url=https://catalog.data.gov/dataset/open-air-chicago-hour-aggregations returned DOMAIN_NOT_ALLOWLISTED"
+    },
+    {
+      "claim": "The candidate describes the source as hourly air-quality sensor data from a US city, mapped to need N1 and the prototype window, found via human input.",
+      "evidence": "candidate record link.data_open_air_chicago_hour_aggre_d4970b (need_ids: N1; target_windows: prototype; found_via: human input)"
+    },
+    {
+      "claim": "The use case's primary geography is IT and N1 requires hourly pollutant concentrations for both the prototype and production windows.",
+      "evidence": "use_case_spec UC1 (geography.primary: IT; needs N1 min_grain hourly, windows prototype and production)"
+    }
+  ],
+  "unknowns": [
+    "Actual title, publisher, owner and steward of the dataset",
+    "Licence and terms of use",
+    "Data period / coverage dates, refresh cadence and last update",
+    "Schema, variables, pollutant types and units",
+    "Whether it is hourly at source or only described as hourly",
+    "Whether any station or sensor location is within Italy (almost certainly not, per the candidate description)",
+    "Whether it contains personal data (not assessable)",
+    "Data file location and size"
+  ]
+}

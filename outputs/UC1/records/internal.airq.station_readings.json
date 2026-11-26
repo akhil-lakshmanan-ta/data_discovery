@@ -1,0 +1,128 @@
+{
+  "source_id": "internal.airq.station_readings",
+  "kind": "internal",
+  "title": "City station readings (hourly), Environment Monitoring Unit",
+  "summary": "Hourly NO2 (ug/m3) and PM2.5 (ug/m3) readings from the city's own monitoring stations, keyed by station code and UTC hour start. Catalog lists about 4.2 million rows and an hourly refresh, last refreshed 2026-10-14. Coverage starts 2023-01-01 and is open-ended; it cannot serve the 2004-2005 prototype window. Station VR-03 (Via Roma) stopped reporting on 2024-06-30 according to the wiki.",
+  "schema": {
+    "documented": "structured",
+    "field_count": 4,
+    "fields": [
+      {
+        "name": "station_id",
+        "type": "string",
+        "description": "Monitoring station code",
+        "pii": false,
+        "unit": null
+      },
+      {
+        "name": "ts_utc",
+        "type": "timestamp",
+        "description": "Hour start, UTC",
+        "pii": false,
+        "unit": "UTC hour start"
+      },
+      {
+        "name": "no2_ugm3",
+        "type": "numeric",
+        "description": "NO2 concentration, micrograms per cubic metre",
+        "pii": false,
+        "unit": "ug/m3"
+      },
+      {
+        "name": "pm25_ugm3",
+        "type": "numeric",
+        "description": "PM2.5 concentration, micrograms per cubic metre",
+        "pii": false,
+        "unit": "ug/m3"
+      }
+    ],
+    "notes": "Catalog column list only. No validation flag, PM2.5 measurement method or station metadata column is documented."
+  },
+  "temporal": {
+    "start": "2023-01-01",
+    "end": null,
+    "grain": "hourly",
+    "metadata_last_updated": "2026-10-14",
+    "open_ended": true,
+    "refresh_cadence": "hourly (catalog refresh_cadence field)"
+  },
+  "spatial": {
+    "coverage": [
+      "IT"
+    ],
+    "code_system": "free station codes (station_id); no coordinates or district field in the catalog entry",
+    "notes": "City of Valdena monitoring stations, northern Italy (fictional client). Station list not documented in the catalog entry; wiki names station VR-03 (Via Roma)."
+  },
+  "ownership": {
+    "owner": "Environment Monitoring Unit",
+    "publisher": null,
+    "steward": "named steward recorded in catalog entry (individual name not copied here)"
+  },
+  "licence": {
+    "name": "internal",
+    "agreement_status": null,
+    "attribution_text": null,
+    "commercial_use": "not_applicable",
+    "evidence": "catalog entry classification 'internal' (get_catalog_entry internal.airq.station_readings)",
+    "mixed_sources": false,
+    "url": null
+  },
+  "access": {
+    "method": "warehouse_sql",
+    "auth_required": true,
+    "reachable": null,
+    "classification": "internal",
+    "request_process": "Request to the Environment Monitoring Unit (catalog access.request_process). No request record or approval status found in wiki or catalog.",
+    "approx_size_bytes": null
+  },
+  "declared_metadata": {
+    "contains_pii": false,
+    "status": "active",
+    "grain": "hourly",
+    "refresh_cadence": "hourly",
+    "row_count_approx": 4200000,
+    "classification": "internal"
+  },
+  "documentation_excerpts": [
+    "Catalog description: 'Hourly NO2 and PM2.5 readings from the city's own monitoring stations.'",
+    "Wiki station_network (last_edited 2024-07-01): 'Station VR-03 (Via Roma) was switched off on 2024-06-30. Its readings stop there.'",
+    "Wiki station_network: '`airq.station_readings` still lists the network as active. Station VR-03 has no readings after 2024-06-30.'",
+    "Wiki station_network: 'The other stations report continuously from 2023-01-01.'"
+  ],
+  "quality_notes": [
+    "Catalog vs wiki: catalog temporal_coverage start 2023-01-01 (open-ended end); wiki station_network (2024-07-01) confirms other stations continuous from 2023-01-01, so the start date is consistent.",
+    "Catalog vs wiki: catalog status 'active' and the network is described as active, but wiki (2024-07-01) says station VR-03 stopped on 2024-06-30. Production window 2024-01-01 to 2025-12-31 therefore has a gap for VR-03 from 2024-06-30 onward (about 18 months of that station's data missing if it is used).",
+    "Prototype window 2004-03-10 to 2005-04-04 is entirely outside coverage; this source cannot serve N1 for the prototype window.",
+    "No hourly traffic, temperature or humidity fields: this source meets N1 only. Needs N2, N3 must be sourced elsewhere.",
+    "PM2.5 measurement method, unit validation flags and data-quality status are not documented; no flag column is listed.",
+    "Catalog last_refreshed 2026-10-14 (refresh_cadence hourly) is recent relative to as_of 2026-10-15; timeliness is consistent with the declared cadence but was not verified against data.",
+    "Station metadata (locations, coordinates, district) is not in the catalog entry, so joins to traffic counters by distance cannot be done from this entry alone.",
+    "Not sampled: internal source, no data file was read; row count and null patterns are unverified."
+  ],
+  "provenance": [
+    {
+      "claim": "Catalog fields: owner Environment Monitoring Unit, classification internal, temporal_coverage start 2023-01-01 end null, grain hourly, refresh hourly, last_refreshed 2026-10-14, row_count_approx 4200000, access method warehouse_sql",
+      "evidence": "get_catalog_entry internal.airq.station_readings"
+    },
+    {
+      "claim": "Station VR-03 (Via Roma) switched off 2024-06-30; catalog still lists network as active; other stations continuous from 2023-01-01",
+      "evidence": "read_wiki_page station_network (last_edited 2024-07-01)"
+    },
+    {
+      "claim": "No other wiki page or catalog entry records the access request status, PM2.5 method or validation flags",
+      "evidence": "search_internal_catalog 'air quality station readings access request Environment Monitoring Unit PM2.5 validation'; wiki_backlinks of catalog entry = [station_network] only"
+    }
+  ],
+  "unknowns": [
+    "Status of the access request to the Environment Monitoring Unit (no record found).",
+    "Whether the warehouse table is reachable and its actual row count and date range (not tested; no access granted to the profiler).",
+    "PM2.5 measurement method and whether values are validated or provisional.",
+    "Whether any station besides VR-03 has gaps; the wiki gives no per-station coverage table.",
+    "Station list, locations and coordinates (needed for distance joins to traffic counters).",
+    "Whether NO2 or PM2.5 values are null-coded or negative; sample not read.",
+    "Licence and reuse terms beyond internal classification.",
+    "Whether the catalog status/active flag was updated after the 2024-07-01 wiki note."
+  ],
+  "status": "active",
+  "location": "azure://valdena-health/env/station_readings"
+}

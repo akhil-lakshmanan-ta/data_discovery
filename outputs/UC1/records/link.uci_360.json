@@ -1,0 +1,212 @@
+{
+  "source_id": "link.uci_360",
+  "kind": "dataset_link",
+  "title": "UCI 360 Air Quality (multisensor hourly responses with reference analyzer, Italian city, 2004-2005)",
+  "summary": "A single-site, hourly-averaged air-quality dataset from a metal-oxide multisensor device at road level in an unnamed, significantly polluted Italian city. It pairs five sensor responses with certified reference concentrations (CO, NMHC, benzene, NOx, NO2) plus temperature, relative humidity and absolute humidity. The sample is the whole file: 9,357 rows covering 2004-03-10 to 2005-04-04. It covers only the prototype window and has no traffic data.",
+  "schema": {
+    "documented": "structured",
+    "field_count": 15,
+    "fields": [
+      {
+        "name": "Date",
+        "description": "Date DD/MM/YYYY (sample shows M/D/YYYY text parsed as US-style format)",
+        "type": "date",
+        "unit": null,
+        "pii": false
+      },
+      {
+        "name": "Time",
+        "description": "Hour of day (metadata says HH.MM.SS; sample shows HH:MM:SS, e.g. '0:00:00', '18:00:00')",
+        "type": "text",
+        "unit": null,
+        "pii": false
+      },
+      {
+        "name": "CO(GT)",
+        "description": "True hourly averaged CO concentration (reference analyzer)",
+        "type": "number",
+        "unit": "mg/m^3",
+        "pii": false
+      },
+      {
+        "name": "PT08.S1(CO)",
+        "description": "Hourly averaged sensor response, nominally CO targeted",
+        "type": "integer",
+        "unit": null,
+        "pii": false
+      },
+      {
+        "name": "NMHC(GT)",
+        "description": "True hourly averaged overall non-methane hydrocarbons (reference analyzer)",
+        "type": "integer",
+        "unit": "microg/m^3",
+        "pii": false
+      },
+      {
+        "name": "C6H6(GT)",
+        "description": "True hourly averaged benzene concentration (reference analyzer)",
+        "type": "number",
+        "unit": "microg/m^3",
+        "pii": false
+      },
+      {
+        "name": "PT08.S2(NMHC)",
+        "description": "Hourly averaged sensor response, nominally NMHC targeted",
+        "type": "integer",
+        "unit": null,
+        "pii": false
+      },
+      {
+        "name": "NOx(GT)",
+        "description": "True hourly averaged NOx concentration (reference analyzer)",
+        "type": "integer",
+        "unit": "ppb",
+        "pii": false
+      },
+      {
+        "name": "PT08.S3(NOx)",
+        "description": "Hourly averaged sensor response, nominally NOx targeted",
+        "type": "integer",
+        "unit": null,
+        "pii": false
+      },
+      {
+        "name": "NO2(GT)",
+        "description": "True hourly averaged NO2 concentration (reference analyzer)",
+        "type": "integer",
+        "unit": "microg/m^3",
+        "pii": false
+      },
+      {
+        "name": "PT08.S4(NO2)",
+        "description": "Hourly averaged sensor response, nominally NO2 targeted",
+        "type": "integer",
+        "unit": null,
+        "pii": false
+      },
+      {
+        "name": "PT08.S5(O3)",
+        "description": "Hourly averaged sensor response, nominally O3 targeted",
+        "type": "integer",
+        "unit": null,
+        "pii": false
+      },
+      {
+        "name": "T",
+        "description": "Temperature",
+        "type": "number",
+        "unit": "°C",
+        "pii": false
+      },
+      {
+        "name": "RH",
+        "description": "Relative humidity",
+        "type": "number",
+        "unit": "%",
+        "pii": false
+      },
+      {
+        "name": "AH",
+        "description": "Absolute humidity",
+        "type": "number",
+        "unit": null,
+        "pii": false
+      }
+    ],
+    "notes": "Metadata types several sensor-response columns as Categorical although the sample shows integers. Units for AH are not stated. The page's metadata lists variables but no explicit sentinel handling beyond the notes."
+  },
+  "temporal": {
+    "start": "2004-03-10",
+    "end": "2005-04-04",
+    "grain": "hourly",
+    "metadata_last_updated": "2024-03-10",
+    "open_ended": false,
+    "refresh_cadence": null
+  },
+  "spatial": {
+    "coverage": [
+      "IT"
+    ],
+    "code_system": "free-text (single unnamed Italian city; no station id, coordinates or district)",
+    "notes": "Single road-level sensor site. The city is not named in the catalog or the UCI page. No district or geocode, so it cannot join to district-level clinic counts (N4)."
+  },
+  "ownership": {
+    "owner": null,
+    "publisher": "UCI Machine Learning Repository",
+    "steward": null
+  },
+  "licence": {
+    "name": "CC BY 4.0",
+    "evidence": "UCI dataset page licence section (inspect_dataset_link, found_in 'link'): 'licensed under a Creative Commons Attribution 4.0 International (CC BY 4.0) license'. CONFLICT: UCI notes.summary on the same page states: 'This dataset can be used exclusively for research purposes. Commercial purposes are fully excluded.' Both recorded; not resolved.",
+    "url": "https://creativecommons.org/licenses/by/4.0/legalcode",
+    "agreement_status": null,
+    "attribution_text": "Cite Saverio Vito (creator) and De Vito et al., Sens. and Act. B, Vol. 129, 2, 2008; DOI 10.24432/C59K5F",
+    "commercial_use": "unknown",
+    "mixed_sources": false
+  },
+  "access": {
+    "method": "file_download",
+    "auth_required": false,
+    "reachable": true,
+    "approx_size_bytes": 741211,
+    "classification": "public"
+  },
+  "canonical_ref": "uci:360",
+  "declared_metadata": {
+    "has_missing_values": "no",
+    "missing_values_symbol": null,
+    "num_instances": 9358,
+    "num_features": 15,
+    "demographics": [],
+    "target_col": null,
+    "contains_pii": null,
+    "metadata_last_updated": "Sun Mar 10 2024"
+  },
+  "documentation_excerpts": [
+    "Missing values are tagged with -200 value.",
+    "This dataset can be used exclusively for research purposes. Commercial purposes are fully excluded.",
+    "Data were recorded from March 2004 to February 2005 (one year)",
+    "has_missing_values: no (declared flag, contradicted by the -200 sentinel described in the notes)"
+  ],
+  "quality_notes": [
+    "Missing-value coding conflict: the UCI declared flag has_missing_values = 'no' and missing_values_symbol = null, but the notes say 'Missing values are tagged with -200 value'. The sample confirms -200 in CO(GT) (1,592 rows, ~17% of rows missing), NMHC(GT) (8,443 rows, ~90% missing), NOx(GT) (1,639), NO2(GT) (1,642), and the sensor columns and T/RH/AH (366 rows each). Reference columns therefore have heavy gaps that must be set to null before use.",
+    "C6H6(GT) reports non_missing_share 1.0 and no sentinel count, yet its minimum is -200.0; the -200 values are therefore present but not counted as missing by the profiler. Treat as missing.",
+    "Temporal coverage conflict: UCI notes say 'March 2004 to February 2005 (one year)'; the file sample (whole file) runs to 2005-04-04. The file is the authority for the extent; record both.",
+    "Row count: metadata says 9,358 instances; the file has 9,357 data rows (sample_is_whole_file true), a one-row difference, possibly a header or count difference.",
+    "Negative values: T has 13 negative readings (min -1.9 °C), which are plausible winter temperatures and not sentinels. CO(GT) has 91 negative readings, which the sample attributes to -200 sentinels; check whether any non-sentinel negatives remain.",
+    "Sensor columns (PT08.*) are declared Categorical in metadata but are integers in the file. The Time variable is described as HH.MM.SS in variable_info but appears as HH:MM:SS in the file, with no zero-padding (e.g. '0:00:00').",
+    "Sensor drift and cross-sensitivity are documented by the provider (De Vito et al., 2008), so sensor responses are not reliable standalone concentration measures; the reference columns are the ground truth.",
+    "Coverage vs needs: the dataset covers only the prototype window (N1 partly, N3 yes). It has no traffic (N2), no production-window data (2024-2025), no clinic data (N4, N5) and no national context (N6). Single-site only, so it cannot represent the city's stations.",
+    "Licence conflict: CC BY 4.0 on the page licence section vs. research-only, commercial use excluded, in the dataset notes. Needs legal review before any use in a clinical or commercial warning service."
+  ],
+  "provenance": [
+    {
+      "claim": "Dataset is UCI #360 Air Quality, 9,358 instances, 15 features, hourly, Italian city, March 2004 to February 2005 per notes; declared has_missing_values 'no'",
+      "evidence": "inspect_dataset_link url https://archive.ics.uci.edu/dataset/360/air+quality (metadata)"
+    },
+    {
+      "claim": "Missing values are coded as -200 per the dataset notes",
+      "evidence": "inspect_dataset_link metadata.notes.summary"
+    },
+    {
+      "claim": "Actual file covers 2004-03-10 to 2005-04-04, 9,357 rows, whole file sampled; -200 sentinel counts per column (CO 1,592; NMHC 8,443; NOx 1,639; NO2 1,642; sensors/T/RH/AH 366)",
+      "evidence": "sample_data_file https://archive.ics.uci.edu/static/public/360/data.csv"
+    },
+    {
+      "claim": "Licence is CC BY 4.0 (found on the link page), while notes say research-only, commercial excluded",
+      "evidence": "inspect_dataset_link licence (found_in link) and metadata.notes.summary"
+    },
+    {
+      "claim": "Creator Saverio Vito; DOI 10.24432/C59K5F; file size 741,211 bytes",
+      "evidence": "inspect_dataset_link metadata.creators, metadata.doi; sample_data_file bytes_read"
+    }
+  ],
+  "unknowns": [
+    "Name of the Italian city and the monitoring site location (not stated in the source)",
+    "Who owns or maintains the data beyond UCI and the creator; no steward stated",
+    "Whether the licence (CC BY 4.0) or the research-only notice governs use; no resolution found",
+    "Refresh cadence (dataset is static; not stated)",
+    "Whether the sensor-response columns are used for any calibration in the source beyond the notes",
+    "Traffic data, clinic data and any 2024-2025 coverage: not present in this source"
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "flags": {
+    "api.nager_public_holidays": [
+      {
+        "code": "LIC-UNKNOWN",
+        "evidence": "No licence established. Evidence field: \"Register entry api.nager_public_holidays (list_external_register): agreement_status 'not_required_open_data', terms_url https://github.com/nager/Nager.Date. probe_url of that page shows the repository is MIT licensed (LICENSE file linked from README). That MIT licence is for the software; no data-specific licence statement was found on the terms page. Licence of the returned holiday data: unknown.\"",
+        "raised_by": "rule:rule_licence"
+      }
+    ],
+    "api.open_meteo_archive": [
+      {
+        "code": "LIC-ATTRIBUTION",
+        "evidence": "Licence 'CC BY 4.0 (API data, as stated by provider); underlying upstream sources carry their own terms' requires attribution",
+        "raised_by": "rule:rule_licence"
+      },
+      {
+        "code": "LIC-MIXED",
+        "evidence": "Record states that parts come from upstream providers with different terms",
+        "raised_by": "rule:rule_licence"
+      }
+    ],
+    "internal.sales.daily_by_product": [
+      {
+        "code": "ACC-RESTRICTED",
+        "evidence": "auth_required=True, classification=confidential, process='Request to Retail Operations (catalog access.request_process). Access grant status unknown; not tested.'",
+        "raised_by": "rule:rule_access"
+      }
+    ],
+    "internal.sales.products": [],
+    "internal.store.calendar": []
+  },
+  "warnings": []
+}

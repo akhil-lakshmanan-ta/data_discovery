@@ -1,0 +1,488 @@
+{
+ "agent": "profiler__api.nager_public_holidays",
+ "system": "# Operating rules (all discovery agents)\n\nYou are one agent in a data-discovery system. The goal is to locate, catalog and assess the feasibility of data sources for a business problem **before any pipeline is built**.\n\n- **Metadata first, then a small sample, never the whole dataset.** Work from catalog entries, wiki pages, API metadata, landing pages, descriptors and terms pages. You may read a capped sample of a data file with `sample_data_file` to check structure and quality, but never try to download a whole dataset. Do not copy personal data (names, emails, addresses, ids) into your output.\n- **Provenance.** Every claim you make about a source must be traceable to a tool call (tool name and argument), a URL, a catalog field or a wiki page id.\n- **Unknown stays unknown.** If no source states a licence, owner, refresh cadence, consent or coverage date, record null or \"unknown\" and say so. Never infer one from what is typical.\n- **Guardrails are findings.** A refused host (DOMAIN_NOT_ALLOWLISTED), a timeout, a 401/403, an expired agreement or a restricted table is evidence to record. Do not look for another route to the same data.\n- **Documentation beats catalog metadata when it is more specific or more recent.** When they disagree, record both, with dates.\n- **Be economical.** Use the fewest tool calls that answer the question, and run independent calls in parallel. Stop when you have enough evidence, and finish by calling your submit tool.\n\n\n# Role: Profiler\n\nYou profile **one** candidate source and return a **catalog record**: an auto-generated summary of schema, freshness, ownership, licence, access and documented quality issues, with provenance for every claim.\n\nWhat to gather, by kind:\n- **internal**: `get_catalog_entry` (all fields), then every wiki backlink and related doc with `read_wiki_page`. Record catalog vs wiki disagreements in `quality_notes`, quoting both sides with dates. Internal sources have `licence.name = \"internal\"` and `commercial_use = \"not_applicable\"`.\n- **public_api**: `list_external_register` for the endpoint, then `call_public_api` probes to check that it responds and which period it covers. For every candidate, **always** probe the start and the end of each target window (use the window dates from the use case, one small call for each end). For year-based endpoints, call each calendar year that a target window touches. Do this even when coverage looks complete. Keep each call short. Record each window and year you probed in `provenance`, and list any year you could not probe in `unknowns`. Read the provider's terms with `probe_url` on `terms_url` and record the licence and its exact source.\n- **vendor_feed**: read the register entry. Do not try to call it. Record the agreement status and detail in `licence.agreement_status`, and set `access.reachable` to false when credentials are revoked or not issued.\n- **dataset_link** (any URL a human supplied; the link can point anywhere):\n  1. `inspect_dataset_link` on the link. It tells you the link type and gives metadata, licence evidence, files and next steps.\n  2. By link type:\n     - `uci_dataset_page`: read `metadata` (declared flags, notes, variables). If `data_url` exists, `sample_data_file` on it. Otherwise the data is only in an archive: describe the schema from the metadata and say the sample was not possible.\n     - `landing_page` (portals such as Kaggle, Zenodo, data.gov, CKAN or Hugging Face): read `jsonld_datasets` first (licence, dates, coverage, distribution), then `meta_description` and `text_start`. Pick the most specific data file from the distribution or `data_links` and `sample_data_file` it, if its host is allowlisted. If downloads need a login or subscription, set `access.auth_required = true`.\n     - `frictionless_datapackage`: `summarize_datapackage` with a `field_filter` for the use case's geography (e.g. the country code prefix the use case needs). Never sample the large CSVs it lists.\n     - `json_stat`: read the summary (dimensions, time, geo codes, warnings).\n     - `data_file`: the sample profile is already in the result. Find documentation for the file (repository README, parent page) if you can, using `probe_url`.\n     - `json_api`: use the shape and dates found. One more call at most.\n     - `login_wall` / `unreachable` / a refused host: record `access.reachable = false` (or `auth_required = true` for a login wall), say which host or credential would be needed, and stop.\n  3. Licence: use the licence from `inspect_dataset_link` and say where it was found (`found_in`). If none was found, look once on the provider's terms page with `probe_url`. Otherwise record null. Never assume a portal's usual licence.\n  4. Copy `canonical_ref` from `inspect_dataset_link` into the record.\n  5. Put what the **sample** showed in `sample_findings`, naming the column: sentinel values, negative quantities, zero shares, odd value sets (country spellings), date formats, personal-looking columns. A sample's date range is the range of the first rows only: take `temporal.start/end` from the documentation, not from the sample, unless the sample is the whole file.\n  6. Decide what the data **is**: entity, grain, period, geography, population. The Risk Assessor judges fit from this.\n\nField rules:\n- `temporal.start` / `temporal.end` are ISO dates (YYYY-MM-DD) of the **data period**. Use `end = null` only for sources that are still updating. `grain` is one of the schema's values.\n- `access.approx_size_bytes`: the largest file or table size you found stated (descriptor bytes, content-length, row counts x width if stated), else null.\n- `access.reachable = false` if the link itself (or its metadata) could not be reached, the host was refused, or the store cannot be restored. A data file that timed out or is an archive that cannot be sampled does NOT make the source unreachable when its metadata was read; note it in `quality_notes`.\n- `licence.mixed_sources = true` when different fields or files come from upstream providers with different terms.\n- `spatial.code_system`: how places are identified (ISO2, ISO3, free-text country names, Eurostat codes, ...). This decides whether joins will work.\n- `schema.documented`: \"structured\" when fields come with names and types, \"free_text_only\" when they are only described in prose, \"none\" otherwise.\n- At least three `provenance` entries. Put everything you could not establish in `unknowns`.\n",
+ "messages": [
+  {
+   "role": "user",
+   "content": "<use_case_spec>\n{\n \"id\": \"UC2\",\n \"title\": \"Ice-cream sales: do hot days and public holidays raise our sales?\",\n \"client\": \"Valdena Gelato Shop (fictional, northern Italy)\",\n \"as_of\": \"2026-10-15\",\n \"geography\": {\n  \"primary\": [\n   \"IT\"\n  ],\n  \"secondary\": []\n },\n \"windows\": [\n  {\n   \"id\": \"history\",\n   \"start\": \"2023-06-01\",\n   \"end\": \"2025-05-31\",\n   \"purpose\": \"Two summers of daily sales, to see how weather and holidays affect them.\"\n  },\n  {\n   \"id\": \"recent\",\n   \"start\": \"2025-06-01\",\n   \"end\": \"2026-03-31\",\n   \"purpose\": \"The most recent months, to check that the pattern still holds.\"\n  }\n ],\n \"needs\": [\n  {\n   \"id\": \"N1\",\n   \"name\": \"Daily ice-cream sales by product\",\n   \"priority\": \"must\",\n   \"min_grain\": \"daily\",\n   \"windows\": [\n    \"history\",\n    \"recent\"\n   ]\n  },\n  {\n   \"id\": \"N2\",\n   \"name\": \"Mapping of product codes before and after the 2024 code change\",\n   \"priority\": \"must\",\n   \"min_grain\": \"static\",\n   \"windows\": [\n    \"history\"\n   ]\n  },\n  {\n   \"id\": \"N3\",\n   \"name\": \"Daily maximum temperature\",\n   \"priority\": \"must\",\n   \"min_grain\": \"daily\",\n   \"windows\": [\n    \"history\",\n    \"recent\"\n   ]\n  },\n  {\n   \"id\": \"N4\",\n   \"name\": \"Public holidays in Italy\",\n   \"priority\": \"should\",\n   \"min_grain\": \"daily\",\n   \"windows\": [\n    \"history\",\n    \"recent\"\n   ]\n  },\n  {\n   \"id\": \"N5\",\n   \"name\": \"Shop opening days and local events\",\n   \"priority\": \"should\",\n   \"min_grain\": \"daily\",\n   \"windows\": [\n    \"history\",\n    \"recent\"\n   ]\n  }\n ]\n}\n</use_case_spec>\n\n<candidate>\n{\n \"source_id\": \"api.nager_public_holidays\",\n \"kind\": \"public_api\",\n \"title\": \"Nager.Date public holidays API (country IT, per year)\",\n \"need_ids\": [\n  \"N4\"\n ],\n \"target_windows\": [\n  \"history\",\n  \"recent\"\n ],\n \"why_relevant\": \"Register source for national public holidays by year and country code. Needed for the holiday flag covering 2023 to 2026 (one call per year, IT).\",\n \"found_via\": \"list_external_register\",\n \"suspected_issues\": [\n  \"Nager returns national holidays only; regional and patron-saint days are not covered and must be flagged as gaps or sourced separately.\",\n  \"Holiday flag is not the same as the shop being closed; closure must come from internal calendar.\",\n  \"Easter-linked dates must be checked against an official Italian source for a sample (not yet done).\"\n ]\n}\n</candidate>\n\nProfile this one source and call submit_catalog_record."
+  },
+  {
+   "role": "assistant",
+   "content": [
+    {
+     "signature": "CAQSvQYKEggUEAEYAjgBQgh0aGlua2luZxIMhPL4qFz2TBs9j9iBGgzU/Dq545frHNdizG4iMDLoCFnIk5EFMJ/twZQPbiNrwEIR78oepDBs0h3TZu9ZDLIsiF4R2tV1XKrDJL0N5SrYBfupoew6a9bWjte27X98Zq+xkz034fupEpxQN8jvlwS6nyN9ZMvTP2E8OHjEeOKE3QJoy3vWW/51us9xc3NluY9DfbFXs0ddssejo7jWocYGPYlCZVY7l2JJrbuu2Pta1v+n0k5EIf/6YYaB0kQXWPHen5WEjpUu33ZTbu7sCCSgdFZKfDbV7jDeLISPSzFdx8zaXua+AvMbBH0SLVcELUNHkLSoR4NoyBNJ/uKKFNDZ2IZJTVrWwmuCsKThs0j6jZqVFyblQvspMhBtBg9Fi41zFx2NNs+l6s8nxD7yBSZ0pCJ10gbC+C/zTyDKhVxc+Hy3C9JaBNsYGICJDUyjSRvLCayOpnhUGNYezlELqnpUUP+6ovRWTavRDiqRIE1hI/ZH5sMaHa/swxvKwzrAFs6DuRG1hBT68oZ8v4pYWstkS14Nk2PlnNJ7sJgpsUQI0d2oRjg9CHOdNti4jWKASDNC41QjHoq4u+Abef6xTN0ZYxhRVD2mr54tISGCUz8AAQYK8CcxHlJvZIX+zRQN0I7yj1OMspFk9q8dTG9dAYR2cuqmQ8OoQtcDGeagTaS1v/6AbyDnwTOtwpJZ8WtplOGQWcN9oa+rklFxggfW8t/13E3EGEH3EOiDCdkVCCOl8iGR+OnCMp9+XaiHsZcGeN8wRaAGXxCtAgb4OIoDLmbOvasycpF0IWAOzh3m/Vj8qgyeggiC7vXqWfrpQdvUmu6dWBGYqH7dh857XrJbpo6xwWAjaq0842uupKipldavZJNWXBN3/uy5nbDmtz6BSVr5u0hU8wO6xkxv4yr80NTwcqNbTxagTZR5XSqtmSZ8Qw8TC2swSYNBQXnqfDP2Gdq16cGgGehsoZmmghjUxsQjMCIWuIjWjdovjbWHBX71fgWwaZ31CKromzl7XQENppu/3nZiWXGQiBv9o9Ov+u9I+4whKYzBycEbcUNmoeWH9mUGxqSyBs1wGAE=",
+     "thinking": "",
+     "type": "thinking"
+    },
+    {
+     "id": "toolu_bdrk_01KX5PthPBhTxXVh7fqrayat",
+     "input": {},
+     "name": "list_external_register",
+     "type": "tool_use"
+    }
+   ]
+  },
+  {
+   "role": "user",
+   "content": [
+    {
+     "type": "tool_result",
+     "tool_use_id": "toolu_bdrk_01KX5PthPBhTxXVh7fqrayat",
+     "content": "{\"use_case\": \"UC2\", \"sources\": [{\"id\": \"policy.open_data_links\", \"kind\": \"policy\", \"title\": \"Open-data policy for dataset links supplied by analysts\", \"use_cases\": [\"UC1\", \"UC2\"], \"agreement_status\": \"not_required_open_data\", \"approved_purposes\": [\"prototyping\", \"benchmarking\", \"context\"], \"notes\": \"Legal allows publicly available datasets (repositories such as UCI or Zenodo, statistics offices, open-data portals) for prototyping, benchmarking and context, subject to each dataset's own licence as read at its source. Datasets behind a login, with an unknown licence or a non-commercial licence need Legal review before use. Production use of any external dataset needs Legal sign-off.\", \"docs_url\": null, \"terms_url\": null}, {\"id\": \"api.open_meteo_archive\", \"kind\": \"public_api\", \"title\": \"Open-Meteo Historical Weather API (reanalysis)\", \"use_cases\": [\"UC1\", \"UC2\"], \"agreement_status\": \"not_required_open_data\", \"approved_purposes\": [\"prototyping\", \"production\"], \"endpoint\": \"https://archive-api.open-meteo.com/v1/archive\", \"path_params\": [], \"default_query\": {\"latitude\": \"45.46\", \"longitude\": \"9.19\", \"start_date\": \"2014-01-01\", \"end_date\": \"2014-01-03\", \"hourly\": \"temperature_2m,shortwave_radiation\", \"timezone\": \"UTC\"}, \"param_notes\": \"latitude/longitude decimal degrees; start_date/end_date YYYY-MM-DD; hourly or daily variable lists. Keep probe ranges to a few days.\", \"docs_url\": \"https://open-meteo.com/en/docs/historical-weather-api\", \"terms_url\": \"https://open-meteo.com/en/licence\"}, {\"id\": \"api.nager_public_holidays\", \"kind\": \"public_api\", \"title\": \"Nager.Date public holidays API\", \"use_cases\": [\"UC1\", \"UC2\"], \"agreement_status\": \"not_required_open_data\", \"approved_purposes\": [\"prototyping\", \"production\"], \"endpoint\": \"https://date.nager.at/api/v3/PublicHolidays/{year}/{country}\", \"path_params\": [\"year\", \"country\"], \"default_query\": {}, \"param_notes\": \"country is ISO 3166-1 alpha-2 (PT, GB, FR, ...).\", \"docs_url\": \"https://date.nager.at/Api\", \"terms_url\": \"https://github.com/nager/Nager.Date\"}]}"
+    }
+   ]
+  },
+  {
+   "role": "assistant",
+   "content": [
+    {
+     "id": "toolu_bdrk_01TF92mCL7jVG4e4u23W686A",
+     "input": {
+      "source_id": "api.nager_public_holidays",
+      "path_params": {
+       "year": "2023",
+       "country": "IT"
+      }
+     },
+     "name": "call_public_api",
+     "type": "tool_use"
+    },
+    {
+     "id": "toolu_bdrk_015dmQraJWh2SrM6dGch4onJ",
+     "input": {
+      "source_id": "api.nager_public_holidays",
+      "path_params": {
+       "year": "2024",
+       "country": "IT"
+      }
+     },
+     "name": "call_public_api",
+     "type": "tool_use"
+    },
+    {
+     "id": "toolu_bdrk_0176PShdHMopYNmCVoxhRdym",
+     "input": {
+      "source_id": "api.nager_public_holidays",
+      "path_params": {
+       "year": "2025",
+       "country": "IT"
+      }
+     },
+     "name": "call_public_api",
+     "type": "tool_use"
+    },
+    {
+     "id": "toolu_bdrk_0145Xrq9moJ2RUz9qiKEonvy",
+     "input": {
+      "source_id": "api.nager_public_holidays",
+      "path_params": {
+       "year": "2026",
+       "country": "IT"
+      }
+     },
+     "name": "call_public_api",
+     "type": "tool_use"
+    },
+    {
+     "id": "toolu_bdrk_01VzqXFpn2U3psoLBzazTvGw",
+     "input": {
+      "url": "https://github.com/nager/Nager.Date"
+     },
+     "name": "probe_url",
+     "type": "tool_use"
+    }
+   ]
+  },
+  {
+   "role": "user",
+   "content": [
+    {
+     "type": "tool_result",
+     "tool_use_id": "toolu_bdrk_01TF92mCL7jVG4e4u23W686A",
+     "content": "{\"source_id\": \"api.nager_public_holidays\", \"url\": \"https://date.nager.at/api/v3/PublicHolidays/2023/IT\", \"status\": 200, \"error\": null, \"content_type\": \"application/json; charset=utf-8\", \"bytes\": 2307, \"truncated\": false, \"from_cache\": false, \"dates_found\": {\"min_date\": \"2023-01-01\", \"max_date\": \"2023-12-26\", \"n_dates\": 13}, \"shape\": [{\"date\": \"2023-01-01\", \"localName\": \"Capodanno\", \"name\": \"New Year's Day\", \"countryCode\": \"IT\", \"fixed\": false, \"global\": true, \"counties\": null, \"launchYear\": null, \"types\": [\"Public\"]}, {\"date\": \"2023-01-06\", \"localName\": \"Epifania\", \"name\": \"Epiphany\", \"countryCode\": \"IT\", \"fixed\": false, \"global\": true, \"counties\": null, \"launchYear\": null, \"types\": [\"Public\"]}, {\"date\": \"2023-04-09\", \"localName\": \"Pasqua\", \"name\": \"Easter Sunday\", \"countryCode\": \"IT\", \"fixed\": false, \"global\": true, \"counties\": null, \"launchYear\": null, \"types\": [\"Public\"]}, \"… 10 more items (total 13)\"]}"
+    },
+    {
+     "type": "tool_result",
+     "tool_use_id": "toolu_bdrk_015dmQraJWh2SrM6dGch4onJ",
+     "content": "{\"source_id\": \"api.nager_public_holidays\", \"url\": \"https://date.nager.at/api/v3/PublicHolidays/2024/IT\", \"status\": 200, \"error\": null, \"content_type\": \"application/json; charset=utf-8\", \"bytes\": 2307, \"truncated\": false, \"from_cache\": true, \"dates_found\": {\"min_date\": \"2024-01-01\", \"max_date\": \"2024-12-26\", \"n_dates\": 13}, \"shape\": [{\"date\": \"2024-01-01\", \"localName\": \"Capodanno\", \"name\": \"New Year's Day\", \"countryCode\": \"IT\", \"fixed\": false, \"global\": true, \"counties\": null, \"launchYear\": null, \"types\": [\"Public\"]}, {\"date\": \"2024-01-06\", \"localName\": \"Epifania\", \"name\": \"Epiphany\", \"countryCode\": \"IT\", \"fixed\": false, \"global\": true, \"counties\": null, \"launchYear\": null, \"types\": [\"Public\"]}, {\"date\": \"2024-03-31\", \"localName\": \"Pasqua\", \"name\": \"Easter Sunday\", \"countryCode\": \"IT\", \"fixed\": false, \"global\": true, \"counties\": null, \"launchYear\": null, \"types\": [\"Public\"]}, \"… 10 more items (total 13)\"]}"
+    },
+    {
+     "type": "tool_result",
+     "tool_use_id": "toolu_bdrk_0176PShdHMopYNmCVoxhRdym",
+     "content": "{\"source_id\": \"api.nager_public_holidays\", \"url\": \"https://date.nager.at/api/v3/PublicHolidays/2025/IT\", \"status\": 200, \"error\": null, \"content_type\": \"application/json; charset=utf-8\", \"bytes\": 2307, \"truncated\": false, \"from_cache\": false, \"dates_found\": {\"min_date\": \"2025-01-01\", \"max_date\": \"2025-12-26\", \"n_dates\": 13}, \"shape\": [{\"date\": \"2025-01-01\", \"localName\": \"Capodanno\", \"name\": \"New Year's Day\", \"countryCode\": \"IT\", \"fixed\": false, \"global\": true, \"counties\": null, \"launchYear\": null, \"types\": [\"Public\"]}, {\"date\": \"2025-01-06\", \"localName\": \"Epifania\", \"name\": \"Epiphany\", \"countryCode\": \"IT\", \"fixed\": false, \"global\": true, \"counties\": null, \"launchYear\": null, \"types\": [\"Public\"]}, {\"date\": \"2025-04-20\", \"localName\": \"Pasqua\", \"name\": \"Easter Sunday\", \"countryCode\": \"IT\", \"fixed\": false, \"global\": true, \"counties\": null, \"launchYear\": null, \"types\": [\"Public\"]}, \"… 10 more items (total 13)\"]}"
+    },
+    {
+     "type": "tool_result",
+     "tool_use_id": "toolu_bdrk_0145Xrq9moJ2RUz9qiKEonvy",
+     "content": "{\"source_id\": \"api.nager_public_holidays\", \"url\": \"https://date.nager.at/api/v3/PublicHolidays/2026/IT\", \"status\": 200, \"error\": null, \"content_type\": \"application/json; charset=utf-8\", \"bytes\": 2503, \"truncated\": false, \"from_cache\": false, \"dates_found\": {\"min_date\": \"2026-01-01\", \"max_date\": \"2026-12-26\", \"n_dates\": 14}, \"shape\": [{\"date\": \"2026-01-01\", \"localName\": \"Capodanno\", \"name\": \"New Year's Day\", \"countryCode\": \"IT\", \"fixed\": false, \"global\": true, \"counties\": null, \"launchYear\": null, \"types\": [\"Public\"]}, {\"date\": \"2026-01-06\", \"localName\": \"Epifania\", \"name\": \"Epiphany\", \"countryCode\": \"IT\", \"fixed\": false, \"global\": true, \"counties\": null, \"launchYear\": null, \"types\": [\"Public\"]}, {\"date\": \"2026-04-05\", \"localName\": \"Pasqua\", \"name\": \"Easter Sunday\", \"countryCode\": \"IT\", \"fixed\": false, \"global\": true, \"counties\": null, \"launchYear\": null, \"types\": [\"Public\"]}, \"… 11 more items (total 14)\"]}"
+    },
+    {
+     "type": "tool_result",
+     "tool_use_id": "toolu_bdrk_01VzqXFpn2U3psoLBzazTvGw",
+     "content": "{\"url\": \"https://github.com/nager/Nager.Date\", \"final_url\": \"https://github.com/nager/Nager.Date\", \"status\": 200, \"error\": null, \"content_type\": \"text/html; charset=utf-8\", \"content_length_header\": null, \"last_modified_header\": null, \"bytes_read\": 271235, \"truncated\": false, \"from_cache\": true, \"format\": \"html\", \"title\": \"GitHub - nager/Nager.Date: Easily access public holidays for 200+ countries via .NET, REST API, Docker, or NuGet for online and offline use. · GitHub\", \"text_start\": \"GitHub - nager/Nager.Date: Easily access public holidays for 200+ countries via .NET, REST API, Docker, or NuGet for online and offline use. · GitHub Skip to content Navigation Menu Sign in Products Platform GitHub Repository hosting, code review, and collaboration Copilot AI coding agent for tasks, projects, and automated work Build & Ship Actions CI/CD and automation Code Quality Quality analysis, fixes, and enforcement Codespaces Cloud development environments Secure Code Security Vulnerability detection and remediation Secret Protection Secret scanning and leak prevention All Features Developers Learn Documentation Training Certifications Build Build with Copilot Customize Copilot Integrations Explore Trending repos GitHub Sponsors Developer articles Changelog Changelog Your source for the latest features, improvements, and fixes across GitHub products, all in one place. Businesses By Stage Enterprises Team Startups Nonprofits By Industry Healthcare Financial services Manufacturing Government See all industries Evaluate GitHub Why GitHub Customer Stories Business insights Trust Center Add-ons GitHub Advanced Security Enterprise-grade code security Copilot for business Enterprise-grade AI features Premium Support Enterprise-grade 24/7 support Resources Learn & Connect Documentation Resource center Blog Events & webinars Community Forum Customer Stories Integrations Support Customer support Training GitHub Status Company About Partners Changelog GitHub Universe GitHub Universe The event for developers, by developers — talks, workshops, and what’s next for GitHub. Pricing Search / Sign in Sign up Appearance settings You signed in with another tab or window. Reload to refresh your session. You signed out in another tab or window. Reload to refresh your session. You switched accounts on another tab or window. Reload to refresh your session. Dismiss alert {{ message }} nager Nager.Date Repository navigation Code Issues 35 ( 35 ) Pull requests 7 ( 7 ) Discussions Actions Security and quality Insights More items Nager.Date Public Sponsor Notifications You must be signed in to change notification settings Fork 229 ( 229 ) Star 1.4k ( 1.4k ) You must be signed in to star a repository About Easily access public holidays for 200+ countries via .NET, REST API, Docker, or NuGet for online and offline use. nagerholidays.com Topics bank-holidays business-days business-days-api calculate-holidays calendar calendar-api holiday holiday-api holiday-calculation holiday-list holiday-software holidayapi holidays holidays-api public-apis public-holiday public-holidays publicholidays rest-api Resources Readme MIT license Contributing Contributing Activity Custom properties Stars 1.4k stars Watchers 24 watching Forks 229 forks Report repository main Branches Tags Go to file Code Open more actions menu Latest commit History 1,771 Commits 1,771 Commits Folders and files Name Name Last commit message Last commit date .github .github doc doc src src .gitattributes .gitattributes .gitignore .gitignore CHANGELOG.md CHANGELOG.md LICENSE LICENSE README.md README.md View all files Repository files navigation README Contributing MIT license More items 📆 Nager.Date - Official Website Discover the convenience of easily accessing holidays from over 200 countries with Nager.Date. Our popular project utilizes the power of .NET and offers a user-friendly public REST API for seamless integration into your application. You can find an overview of the supported countries here \", \"text_chars\": 9786, \"licence_snippets\": [\"-calculation holiday-list holiday-software holidayapi holidays holidays-api public-apis public-holiday public-holidays publicholidays rest-api Resources Readme MIT license Contributing Contributing Activity Custom properties Stars 1.4k stars Watchers 24 watching Forks 229 forks Report repository main Branches Tags Go to file Code Open more actions menu Latest commit History 1,771 \", \"es Name Name Last commit message Last commit date .github .github doc doc src src .gitattributes .gitattributes .gitignore .gitignore CHANGELOG.md CHANGELOG.md LICENSE LICENSE README.md README.md View all files Repository files navigation README Contributing MIT license More items 📆 Nager.Date - Official Website Discover the convenience of easily accessing holidays from over 200 count\", \" for seamless integration into your application. You can find an overview of the supported countries here . How can I use it? Variant Hosting Internet required License key Examples REST API nagerholidays.com Yes No REST API examples Docker container Self-hosted No Yes REST API examples NuGet package Nager.Date In your .NET app No Yes Offline examples The Docker container provides the \", \"r Hub . It provides the same REST API as nagerholidays.com, operated on your own infrastructure without a dependency on our servers. docker run -p 8080:8080 -e LICENSE_KEY=YOUR_LICENSE_KEY nager/nager-date All REST API examples work unchanged, only the base URL changes: curl http://localhost/api/v4/Holidays/US/2026 NuGet dotnet add package Nager.Date HolidaySystem . LicenseKey = \\\"TheL\"], \"licence_links\": [\"/nager/Nager.Date/blob/main/LICENSE\", \"https://docs.github.com/site-policy/github-terms/github-terms-of-service\"]}"
+    }
+   ]
+  },
+  {
+   "role": "assistant",
+   "content": [
+    {
+     "signature": "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",
+     "thinking": "",
+     "type": "thinking"
+    },
+    {
+     "id": "toolu_bdrk_0142JrZm8B6YXezT2p985FAo",
+     "input": {
+      "source_id": "api.nager_public_holidays",
+      "kind": "public_api",
+      "title": "Nager.Date public holidays API (country IT, per year)",
+      "summary": "REST API (v3) returning the public-holiday list for one country and one calendar year, here IT. Each response is a JSON array with one record per holiday: date, local and English names, fixed flag, global flag, counties and type. Probes for 2023, 2024, 2025 and 2026 all returned HTTP 200 with about 2.3–2.5 KB per year, covering the history and recent windows at national level only. Regional and patron-saint days are not represented.",
+      "schema": {
+       "documented": "structured",
+       "field_count": 10,
+       "fields": [
+        {
+         "name": "date",
+         "description": "Holiday date, YYYY-MM-DD",
+         "type": "date",
+         "unit": null,
+         "pii": false
+        },
+        {
+         "name": "localName",
+         "description": "Holiday name in Italian",
+         "type": "string",
+         "unit": null,
+         "pii": false
+        },
+        {
+         "name": "name",
+         "description": "Holiday name in English",
+         "type": "string",
+         "unit": null,
+         "pii": false
+        },
+        {
+         "name": "countryCode",
+         "description": "ISO 3166-1 alpha-2 country code",
+         "type": "string",
+         "unit": null,
+         "pii": false
+        },
+        {
+         "name": "fixed",
+         "description": "Whether the date is fixed each year",
+         "type": "boolean",
+         "unit": null,
+         "pii": false
+        },
+        {
+         "name": "global",
+         "description": "Whether the holiday applies nationwide",
+         "type": "boolean",
+         "unit": null,
+         "pii": false
+        },
+        {
+         "name": "counties",
+         "description": "Region codes if not global; null in sampled IT responses",
+         "type": "array",
+         "unit": null,
+         "pii": false
+        },
+        {
+         "name": "launchYear",
+         "description": "Year the holiday was introduced, if known; null in sampled responses",
+         "type": "integer",
+         "unit": "year",
+         "pii": false
+        },
+        {
+         "name": "types",
+         "description": "Holiday type list, e.g. Public",
+         "type": "array",
+         "unit": null,
+         "pii": false
+        }
+       ],
+       "notes": "Field list taken from the live response shape of the 2023 IT call (call_public_api). Other fields may exist in the API documentation that were not checked."
+      },
+      "temporal": {
+       "start": "2023-01-01",
+       "end": null,
+       "grain": "event",
+       "metadata_last_updated": null,
+       "open_ended": true,
+       "refresh_cadence": "unknown",
+       "start_note": "start of years probed",
+       "end_note": "API is year-parameterised; end is not stated by the source"
+      },
+      "spatial": {
+       "coverage": [
+        "IT"
+       ],
+       "code_system": "ISO 3166-1 alpha-2 (path parameter country; countryCode field)",
+       "notes": "National holidays only in sampled responses (global=true, counties=null). Regional and local holidays are not covered."
+      },
+      "ownership": {
+       "owner": null,
+       "publisher": "Nager.Date project (GitHub nager/Nager.Date; service at date.nager.at)",
+       "steward": null
+      },
+      "licence": {
+       "name": null,
+       "attribution_text": null,
+       "commercial_use": "unknown",
+       "evidence": "Register entry api.nager_public_holidays (list_external_register): agreement_status 'not_required_open_data', terms_url https://github.com/nager/Nager.Date. probe_url of that page shows the repository is MIT licensed (LICENSE file linked from README). That MIT licence is for the software; no data-specific licence statement was found on the terms page. Licence of the returned holiday data: unknown.",
+       "mixed_sources": null,
+       "url": "https://github.com/nager/Nager.Date",
+       "agreement_status": "not_required_open_data (register)"
+      },
+      "access": {
+       "method": "rest_api",
+       "auth_required": false,
+       "reachable": true,
+       "approx_size_bytes": 2503,
+       "request_process": "GET https://date.nager.at/api/v3/PublicHolidays/{year}/{country}. Public, no key in probes. Register approved purposes: prototyping, production."
+      },
+      "declared_metadata": {
+       "agreement_status": "not_required_open_data",
+       "approved_purposes": [
+        "prototyping",
+        "production"
+       ],
+       "docs_url": "https://date.nager.at/Api",
+       "has_missing_values": null,
+       "contains_pii": false
+      },
+      "documentation_excerpts": [
+       "Repository README (probe_url, github.com/nager/Nager.Date): 'Easily access public holidays for 200+ countries via .NET, REST API, Docker, or NuGet'; README notes the REST API is also offered as v4 (e.g. /api/v4/Holidays/US/2026) and self-hosted via Docker.",
+       "Repository footer: 'MIT license'; licence links point to /nager/Nager.Date/blob/main/LICENSE."
+      ],
+      "quality_notes": [
+       "Coverage is national only: all sampled IT records have global=true and counties=null. Regional and patron-saint days (for example local festivals, city patron days) are not included. Shop-level closures and local events must come from another source (N5).",
+       "A holiday flag is not evidence of shop closure; closure must come from the internal calendar.",
+       "Easter-linked dates: the returned Easter Sunday dates were 2023-04-09, 2024-03-31, 2025-04-20 and 2026-04-05. These match the known Easter Sunday dates for those years by general knowledge, but they were NOT checked against an official Italian source (for example the Gazzetta Ufficiale or ISTAT). That check is still open.",
+       "The 2026 response contains 14 records against 13 in 2023–2025. The extra record was not inspected, so the difference is unexplained.",
+       "Register and candidate both point to the v3 endpoint. The README mentions a v4 API; v4 was not probed and is not registered, so it is not assessed here.",
+       "Probe of the 2024 call was served from cache (from_cache=true); the others were live. This does not change the content.",
+       "Data licence is not stated; the MIT licence on the repository covers the software, not necessarily the returned holiday data."
+      ],
+      "provenance": "[{\"claim\": \"Register entry: agreement_status not_required_open_data; endpoint https://date.nager.at/api/v3/PublicHolidays/{year}/{country}; terms_url https://github.com/nager/Nager.Date; approved purposes prototyping and production.\", \"evidence\": \"list_external_register (api.nager_public_holidays)\"}, {\"claim\": \"API responds for 2023, 2024, 2025 and 2026 for country IT with HTTP 200 JSON. Covers both UC2 windows (2023-06-01 to 2025-05-31 and 2025-06-01 to 2026-03-31) by year.\", \"evidence\": \"call_public_api api.nager_public_holidays year=2023,2024,2025,2026 country=IT\"}, {\"claim\": \"Each year's date range returned runs from January 1 to late December (2023: 2023-01-01 to 2023-12-26, 13 records; 2024: 2024-01-01 to 2024-12-26, 13; 2025: 2025-01-01 to 2025-12-26, 13; 2026: 2026-01-01 to 2026-12-26, 14).\", \"evidence\": \"call_public_api dates_found for each year\"}, {\"claim\": \"Records carry global=true and counties=null in sampled IT responses; fields include date, localName, name, countryCode, fixed, global, counties, launchYear, types.\", \"evidence\": \"call_public_api shape for 2023 IT response\"}, {\"claim\": \"Repository is MIT licensed; data licence not stated on the terms page.\", \"evidence\": \"probe_url https://github.com/nager/Nager.Date (licence_snippets; README/LICENSE link)\"}, {\"claim\": \"Probe windows: the history and recent windows fall entirely within calendar years 2023 to 2026, which were all probed. Start and end of the windows were covered by the year calls.\", \"evidence\": \"use case windows vs call_public_api years 2023-2026\"}], \"unknowns\": [\"Licence of the returned holiday data (no data-specific statement found).\", \"Owner and maintainer organisation of the data; publisher is the Nager.Date project only.\", \"Refresh cadence and when each year's list is published or revised.\", \"Whether the 14th holiday in 2026 and any other holiday changes were correct; not inspected.\", \"Official Italian source check for Easter-linked dates and for the full holiday list (not done).\", \"Regional and local holidays (not covered by the API).\", \"Whether the v4 API carries different data or terms; not probed.\", \"Behaviour for 2025-06-01 to 2026-03-31 at window boundaries specifically (covered only by yearly response).\"]",
+      "location": "https://date.nager.at/api/v3/PublicHolidays/{year}/IT",
+      "status": "active",
+      "title_check": "ok"
+     },
+     "name": "submit_catalog_record",
+     "type": "tool_use"
+    }
+   ]
+  },
+  {
+   "role": "user",
+   "content": [
+    {
+     "type": "tool_result",
+     "tool_use_id": "toolu_bdrk_0142JrZm8B6YXezT2p985FAo",
+     "is_error": true,
+     "content": "Submission rejected. Fix these and call it again:\n- <root>: 'unknowns' is a required property\n- <root>: Additional properties are not allowed ('title_check' was unexpected)\n- temporal: Additional properties are not allowed ('end_note', 'start_note' were unexpected)\n- provenance: '[{\"claim\": \"Register entry: agreement_status not_required_open_data; endpoint https://date.nager.at/api/v3/PublicHolidays/{year}/{country}; terms_url https://github.com/nager/Nager.Date; approved purposes prototyping and production.\", \"evidence\": \"list_external_register (api.nager_public_holidays)\"}, {\"claim\": \"API responds for 2023, 2024, 2025 and 2026 for country IT with HTTP 200 JSON. Covers both UC2 windows (2023-06-01 to 2025-05-31 and 2025-06-01 to 2026-03-31) by year.\", \"evidence\": \"call_public_api api.nager_public_holidays year=2023,2024,2025,2026 country=IT\"}, {\"claim\": \"Each year\\'s date range returned runs from January 1 to late December (2023: 2023-01-01 to 2023-12-26, 13 records; 2024: 2024-01-01 to 2024-12-26, 13; 2025: 2025-01-01 to 2025-12-26, 13; 2026: 2026-01-01 to 2026-12-26, 14).\", \"evidence\": \"call_public_api dates_found for each year\"}, {\"claim\": \"Records carry global=true and counties=null in sampled IT responses; fields include date, localName, name, countryCode, fixed, global, counties, launchYear, types.\", \"evidence\": \"call_public_api shape for 2023 IT response\"}, {\"claim\": \"Repository is MIT licensed; data licence not stated on the terms page.\", \"evidence\": \"probe_url https://github.com/nager/Nager.Date (licence_snippets; README/LICENSE link)\"}, {\"claim\": \"Probe windows: the history and recent windows fall entirely within calendar years 2023 to 2026, which were all probed. Start and end of the windows were covered by the year calls.\", \"evidence\": \"use case windows vs call_public_api years 2023-2026\"}], \"unknowns\": [\"Licence of the returned holiday data (no data-specific statement found).\", \"Owner and maintainer organisation of the data; publisher is the Nager.Date project only.\", \"Refresh cadence and when each year\\'s list is published or revised.\", \"Whether the 14th holiday in 2026 and any other holiday changes were correct; not inspected.\", \"Official Italian source check for Easter-linked dates and for the full holiday list (not done).\", \"Regional and local holidays (not covered by the API).\", \"Whether the v4 API carries different data or terms; not probed.\", \"Behaviour for 2025-06-01 to 2026-03-31 at window boundaries specifically (covered only by yearly response).\"]' is not of type 'array'"
+    }
+   ]
+  },
+  {
+   "role": "assistant",
+   "content": [
+    {
+     "signature": "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",
+     "thinking": "",
+     "type": "thinking"
+    },
+    {
+     "id": "toolu_bdrk_015tTocPciU1h2iNnrEtcKaK",
+     "input": {
+      "source_id": "api.nager_public_holidays",
+      "kind": "public_api",
+      "title": "Nager.Date public holidays API (country IT, per year)",
+      "summary": "REST API (v3) returning the public-holiday list for one country and one calendar year, here IT. Each response is a JSON array with one record per holiday: date, local and English names, fixed flag, global flag, counties and type. Probes for 2023, 2024, 2025 and 2026 all returned HTTP 200 with about 2.3–2.5 KB per year, covering the history and recent windows at national level only. Regional and patron-saint days are not represented.",
+      "schema": {
+       "documented": "structured",
+       "field_count": 9,
+       "fields": [
+        {
+         "name": "date",
+         "description": "Holiday date, YYYY-MM-DD",
+         "type": "date",
+         "unit": null,
+         "pii": false
+        },
+        {
+         "name": "localName",
+         "description": "Holiday name in Italian",
+         "type": "string",
+         "unit": null,
+         "pii": false
+        },
+        {
+         "name": "name",
+         "description": "Holiday name in English",
+         "type": "string",
+         "unit": null,
+         "pii": false
+        },
+        {
+         "name": "countryCode",
+         "description": "ISO 3166-1 alpha-2 country code",
+         "type": "string",
+         "unit": null,
+         "pii": false
+        },
+        {
+         "name": "fixed",
+         "description": "Whether the date is fixed each year",
+         "type": "boolean",
+         "unit": null,
+         "pii": false
+        },
+        {
+         "name": "global",
+         "description": "Whether the holiday applies nationwide",
+         "type": "boolean",
+         "unit": null,
+         "pii": false
+        },
+        {
+         "name": "counties",
+         "description": "Region codes if not global; null in sampled IT responses",
+         "type": "array",
+         "unit": null,
+         "pii": false
+        },
+        {
+         "name": "launchYear",
+         "description": "Year the holiday was introduced, if known; null in sampled responses",
+         "type": "integer",
+         "unit": "year",
+         "pii": false
+        },
+        {
+         "name": "types",
+         "description": "Holiday type list, e.g. Public",
+         "type": "array",
+         "unit": null,
+         "pii": false
+        }
+       ],
+       "notes": "Field list taken from the live response shape of the 2023 IT call (call_public_api). Other fields may exist in the API documentation that were not checked."
+      },
+      "temporal": {
+       "start": "2023-01-01",
+       "end": null,
+       "grain": "event",
+       "metadata_last_updated": null,
+       "open_ended": true,
+       "refresh_cadence": "unknown"
+      },
+      "spatial": {
+       "coverage": [
+        "IT"
+       ],
+       "code_system": "ISO 3166-1 alpha-2 (path parameter country; countryCode field)",
+       "notes": "National holidays only in sampled responses (global=true, counties=null). Regional and local holidays are not covered."
+      },
+      "ownership": {
+       "owner": null,
+       "publisher": "Nager.Date project (GitHub nager/Nager.Date; service at date.nager.at)",
+       "steward": null
+      },
+      "licence": {
+       "name": null,
+       "attribution_text": null,
+       "commercial_use": "unknown",
+       "evidence": "Register entry api.nager_public_holidays (list_external_register): agreement_status 'not_required_open_data', terms_url https://github.com/nager/Nager.Date. probe_url of that page shows the repository is MIT licensed (LICENSE file linked from README). That MIT licence is for the software; no data-specific licence statement was found on the terms page. Licence of the returned holiday data: unknown.",
+       "mixed_sources": null,
+       "url": "https://github.com/nager/Nager.Date",
+       "agreement_status": "not_required_open_data (register)"
+      },
+      "access": {
+       "method": "rest_api",
+       "auth_required": false,
+       "reachable": true,
+       "approx_size_bytes": 2503,
+       "request_process": "GET https://date.nager.at/api/v3/PublicHolidays/{year}/{country}. Public, no key in probes. Register approved purposes: prototyping, production."
+      },
+      "declared_metadata": {
+       "agreement_status": "not_required_open_data",
+       "approved_purposes": [
+        "prototyping",
+        "production"
+       ],
+       "docs_url": "https://date.nager.at/Api",
+       "has_missing_values": null,
+       "contains_pii": false
+      },
+      "documentation_excerpts": [
+       "Repository README (probe_url, github.com/nager/Nager.Date): 'Easily access public holidays for 200+ countries via .NET, REST API, Docker, or NuGet'; README notes the REST API is also offered as v4 (e.g. /api/v4/Holidays/US/2026) and self-hosted via Docker.",
+       "Repository footer: 'MIT license'; licence links point to /nager/Nager.Date/blob/main/LICENSE."
+      ],
+      "quality_notes": [
+       "Coverage is national only: all sampled IT records have global=true and counties=null. Regional and patron-saint days (for example local festivals, city patron days) are not included. Shop-level closures and local events must come from another source (N5).",
+       "A holiday flag is not evidence of shop closure; closure must come from the internal calendar.",
+       "Easter-linked dates: the returned Easter Sunday dates were 2023-04-09, 2024-03-31, 2025-04-20 and 2026-04-05. These match the known Easter Sunday dates for those years by general knowledge, but they were NOT checked against an official Italian source (for example the Gazzetta Ufficiale or ISTAT). That check is still open.",
+       "The 2026 response contains 14 records against 13 in 2023–2025. The extra record was not inspected, so the difference is unexplained.",
+       "Register and candidate both point to the v3 endpoint. The README mentions a v4 API; v4 was not probed and is not registered, so it is not assessed here.",
+       "The 2024 probe was served from cache (from_cache=true); the others were live. This does not change the content.",
+       "Data licence is not stated; the MIT licence on the repository covers the software, not necessarily the returned holiday data."
+      ],
+      "provenance": [
+       {
+        "claim": "Register entry: agreement_status not_required_open_data; endpoint https://date.nager.at/api/v3/PublicHolidays/{year}/{country}; terms_url https://github.com/nager/Nager.Date; approved purposes prototyping and production.",
+        "evidence": "list_external_register (api.nager_public_holidays)"
+       },
+       {
+        "claim": "API responds for 2023, 2024, 2025 and 2026 for country IT with HTTP 200 JSON. These four calendar years cover both UC2 windows (2023-06-01 to 2025-05-31 and 2025-06-01 to 2026-03-31).",
+        "evidence": "call_public_api api.nager_public_holidays year=2023, 2024, 2025, 2026 country=IT"
+       },
+       {
+        "claim": "Each year's returned date range runs from January 1 to late December (2023: 2023-01-01 to 2023-12-26, 13 records; 2024: 2024-01-01 to 2024-12-26, 13; 2025: 2025-01-01 to 2025-12-26, 13; 2026: 2026-01-01 to 2026-12-26, 14).",
+        "evidence": "call_public_api dates_found for each year"
+       },
+       {
+        "claim": "Records carry global=true and counties=null in sampled IT responses; fields include date, localName, name, countryCode, fixed, global, counties, launchYear, types.",
+        "evidence": "call_public_api shape for 2023 IT response"
+       },
+       {
+        "claim": "Repository is MIT licensed; data licence not stated on the terms page.",
+        "evidence": "probe_url https://github.com/nager/Nager.Date (licence_snippets; README/LICENSE link)"
+       }
+      ],
+      "unknowns": [
+       "Licence of the returned holiday data (no data-specific statement found).",
+       "Owner and maintainer organisation of the data; publisher is the Nager.Date project only.",
+       "Refresh cadence and when each year's list is published or revised.",
+       "Whether the 14th holiday in 2026 and any other holiday changes were correct; not inspected.",
+       "Official Italian source check for Easter-linked dates and for the full holiday list (not done).",
+       "Regional and local holidays (not covered by the API).",
+       "Whether the v4 API carries different data or terms; not probed.",
+       "Window boundary dates (2023-06-01, 2025-05-31, 2025-06-01, 2026-03-31) were covered only by the full-year responses, not by date-specific calls."
+      ],
+      "location": "https://date.nager.at/api/v3/PublicHolidays/{year}/IT",
+      "status": "active"
+     },
+     "name": "submit_catalog_record",
+     "type": "tool_use"
+    }
+   ]
+  },
+  {
+   "role": "user",
+   "content": [
+    {
+     "type": "tool_result",
+     "tool_use_id": "toolu_bdrk_015tTocPciU1h2iNnrEtcKaK",
+     "content": "accepted"
+    }
+   ]
+  }
+ ]
+}

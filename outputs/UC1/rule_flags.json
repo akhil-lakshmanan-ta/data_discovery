@@ -1,0 +1,96 @@
+{
+  "flags": {
+    "api.open_meteo_archive": [
+      {
+        "code": "LIC-ATTRIBUTION",
+        "evidence": "Licence 'CC BY 4.0 (for Open-Meteo API data, as stated by the provider); underlying reanalysis from Copernicus C3S carries its own licence, not read' requires attribution",
+        "raised_by": "rule:rule_licence"
+      },
+      {
+        "code": "LIC-MIXED",
+        "evidence": "Record states that parts come from upstream providers with different terms",
+        "raised_by": "rule:rule_licence"
+      }
+    ],
+    "internal.airq.station_readings": [
+      {
+        "code": "ACC-RESTRICTED",
+        "evidence": "auth_required=True, classification=internal, process='Request to the Environment Monitoring Unit (catalog access.request_process). No request record or approval status found in wiki or catalog.'",
+        "raised_by": "rule:rule_access"
+      }
+    ],
+    "internal.clinic.resp_visits_daily": [
+      {
+        "code": "ACC-RESTRICTED",
+        "evidence": "auth_required=True, classification=internal, process='Request to Clinical Analytics (catalog access.request_process)'",
+        "raised_by": "rule:rule_access"
+      }
+    ],
+    "internal.traffic.hourly_counts": [],
+    "link.data_open_air_chicago_hour_aggre_d4970b": [
+      {
+        "code": "LIC-UNKNOWN",
+        "evidence": "No licence established. Evidence field: 'No licence statement could be read: inspect_dataset_link on https://catalog.data.gov/dataset/open-air-chicago-hour-aggregations returned DOMAIN_NOT_ALLOWLISTED, so no licence text was reviewed.'",
+        "raised_by": "rule:rule_licence"
+      },
+      {
+        "code": "ACC-UNREACHABLE",
+        "evidence": "Record states the source could not be reached or restored",
+        "raised_by": "rule:rule_access"
+      }
+    ],
+    "link.europa_sdg_11_52_099aa6": [
+      {
+        "code": "LIC-UNKNOWN",
+        "evidence": "No licence established. Evidence field: 'No licence stated in the API response or the link inspection. Eurostat copyright page (probe_url https://ec.europa.eu/eurostat/about/policies/copyright) redirected to an EU Login page with no licence text. Register policy.open_data_links (list_external_register) allows open statistics-office data for prototyping, benchmarking and context, subject to the source licence as read at source; production use needs Legal sign-off.'",
+        "raised_by": "rule:rule_licence"
+      },
+      {
+        "code": "COV-PARTIAL-WINDOW",
+        "evidence": "window prototype (2004-03-10..2005-04-04): covered 0.24 by 2005-01-01..2023-12-31; window production (2024-01-01..2025-12-31): covered 0.00 by 2005-01-01..2023-12-31",
+        "raised_by": "rule:rule_temporal_coverage"
+      }
+    ],
+    "link.lombardia_nicp_bhqi_eba0c8": [],
+    "link.uci_360": [
+      {
+        "code": "LIC-ATTRIBUTION",
+        "evidence": "Licence 'CC BY 4.0' requires attribution",
+        "raised_by": "rule:rule_licence"
+      },
+      {
+        "code": "FRS-STALE",
+        "evidence": "data ends 2005-04-04, more than 5 years before as-of 2026-10-15",
+        "raised_by": "rule:rule_temporal_coverage"
+      },
+      {
+        "code": "DQ-METADATA-CONTRADICTION",
+        "evidence": "declared has_missing_values='no' but the record says: 'Missing values are tagged with -200 value.'",
+        "raised_by": "rule:rule_metadata_contradiction"
+      }
+    ],
+    "vendor.atmosdata_pro": [
+      {
+        "code": "LIC-UNKNOWN",
+        "evidence": "No licence established. Evidence field: 'No licence or terms page is stated: register entry has terms_url null and docs_url null. Vendor contract AD-2021-114 is referenced but its terms are not on file.'",
+        "raised_by": "rule:rule_licence"
+      },
+      {
+        "code": "LIC-AGREEMENT-NOT-ACTIVE",
+        "evidence": "Vendor feed with agreement_status='expired: contract ad-2021-114 ran 2022-01-01 to 2025-12-31; renewal waiting on procurement; no signed renewal on file (list_external_register, vendor.atmosdata_pro)'",
+        "raised_by": "rule:rule_agreement"
+      },
+      {
+        "code": "ACC-RESTRICTED",
+        "evidence": "auth_required=True, classification=None, process='Not callable. API key revoked 2026-01-01 and agreement expired. Renewal of contract AD-2021-114 must be completed by Procurement and a new key issued before any access. approved_purposes is empty, so no use is currently permitted. Not probed, per vendor-feed rule.'",
+        "raised_by": "rule:rule_access"
+      },
+      {
+        "code": "ACC-UNREACHABLE",
+        "evidence": "Record states the source could not be reached or restored",
+        "raised_by": "rule:rule_access"
+      }
+    ]
+  },
+  "warnings": []
+}

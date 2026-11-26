@@ -1,0 +1,95 @@
+{
+  "source_id": "vendor.atmosdata_pro",
+  "kind": "vendor_feed",
+  "title": "AtmosData Pro station-grade weather feed (agreement expired, key revoked)",
+  "summary": "Vendor weather observation feed listed in the external register for UC1 as a candidate for hourly temperature and humidity (need N3, production window). The register records the contract as expired and the API key as revoked, with no approved purposes. No data was read or requested, and no schema, grain, spatial coverage or data period is documented in any source available to this profile.",
+  "schema": {
+    "documented": "none",
+    "fields": [],
+    "notes": "No field list, variable names or units are documented in the register entry; no catalog entry exists under this id (get_catalog_entry returned TOOL_ERROR)."
+  },
+  "temporal": {
+    "start": null,
+    "end": null,
+    "grain": "unknown",
+    "metadata_last_updated": null,
+    "open_ended": null,
+    "refresh_cadence": null
+  },
+  "spatial": {
+    "coverage": [],
+    "code_system": null,
+    "notes": "No geography documented. The register and candidate do not state the station locations or the country coverage of the feed. The use case primary geography is IT; coverage against IT is unknown."
+  },
+  "ownership": {
+    "owner": null,
+    "publisher": "AtmosData Pro (vendor name as listed in register; 'fictional vendor' per register title)",
+    "steward": null
+  },
+  "licence": {
+    "name": null,
+    "evidence": "No licence or terms page is stated: register entry has terms_url null and docs_url null. Vendor contract AD-2021-114 is referenced but its terms are not on file.",
+    "agreement_status": "expired: contract AD-2021-114 ran 2022-01-01 to 2025-12-31; renewal waiting on Procurement; no signed renewal on file (list_external_register, vendor.atmosdata_pro)",
+    "commercial_use": "unknown",
+    "attribution_text": null,
+    "url": null,
+    "mixed_sources": null
+  },
+  "access": {
+    "method": "rest_api",
+    "auth_required": true,
+    "reachable": false,
+    "request_process": "Not callable. API key revoked 2026-01-01 and agreement expired. Renewal of contract AD-2021-114 must be completed by Procurement and a new key issued before any access. approved_purposes is empty, so no use is currently permitted. Not probed, per vendor-feed rule.",
+    "classification": null,
+    "approx_size_bytes": null
+  },
+  "declared_metadata": {
+    "agreement_status": "expired",
+    "approved_purposes": [],
+    "auth": "API key (revoked 2026-01-01)"
+  },
+  "documentation_excerpts": [
+    "Agreement detail: Contract AD-2021-114 ran 2022-01-01 to 2025-12-31. Renewal is waiting on Procurement; no signed renewal on file.",
+    "auth: API key (revoked 2026-01-01)",
+    "approved_purposes: []"
+  ],
+  "quality_notes": [
+    "Candidate record describes the feed as 'station-grade weather'; the register entry describes it only as a 'weather feed' with no station or quality documentation. Station-grade status is unverified.",
+    "Candidate record title says '(expired)'; register title says '(fictional vendor)'. Both agree on expired agreement.",
+    "Contract period 2022-01-01 to 2025-12-31 is the agreement term, not a documented data coverage period. Data coverage dates are unknown.",
+    "Production window (2024-01-01 to 2025-12-31) falls within the expired contract term, but the contract has lapsed and the key is revoked, so it cannot be relied on for the live model without renewal.",
+    "No catalog entry exists for vendor.atmosdata_pro (get_catalog_entry returned TOOL_ERROR); no wiki backlinks were checked because none could be identified from the id.",
+    "Not probed: vendor feeds are not called without an active agreement."
+  ],
+  "provenance": [
+    {
+      "claim": "Agreement expired; contract AD-2021-114 ran 2022-01-01 to 2025-12-31 with no signed renewal on file.",
+      "evidence": "list_external_register: vendor.atmosdata_pro agreement_detail"
+    },
+    {
+      "claim": "API key revoked 2026-01-01; approved_purposes is empty.",
+      "evidence": "list_external_register: vendor.atmosdata_pro auth and approved_purposes fields"
+    },
+    {
+      "claim": "Endpoint is https://api.atmosdata.example/v2/observations; no docs_url or terms_url is listed.",
+      "evidence": "list_external_register: vendor.atmosdata_pro endpoint, docs_url null, terms_url null"
+    },
+    {
+      "claim": "No internal catalog entry exists for this id.",
+      "evidence": "get_catalog_entry vendor.atmosdata_pro returned TOOL_ERROR 'No catalog entry'"
+    },
+    {
+      "claim": "Candidate targets need N3 (hourly temperature and humidity) for the production window.",
+      "evidence": "Candidate record need_ids and target_windows; use_case_spec needs N3"
+    }
+  ],
+  "unknowns": [
+    "Data fields, units and variables of the feed",
+    "Temporal grain and actual data coverage period",
+    "Station locations and whether any are in Italy",
+    "Licence or terms of use for the data and whether commercial use is allowed",
+    "Owner and steward within the client's organisation",
+    "Whether the vendor has any renewal timeline or status beyond 'waiting on Procurement'",
+    "Whether the feed is in fact station-grade (candidate description not verified)"
+  ]
+}
